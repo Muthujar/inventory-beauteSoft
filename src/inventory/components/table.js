@@ -50,6 +50,7 @@ export default class Table extends Component {
       className = "",
       overFlow = true,
       orderBy,
+      updateSearch,
       t,
     } = this.props;
     // let { sortKey: currentSortKey, orderBy = "" } =
@@ -68,6 +69,8 @@ export default class Table extends Component {
                 limit={pagination.limit}
                 page={pagination.page}
                 updatePagination={updatePagination}
+                updateSearch={updateSearch}
+
               />
             )}
 

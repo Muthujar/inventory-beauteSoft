@@ -4,6 +4,7 @@ import Table from "../components/table";
 import Apiservice from "../constants/apiservice";
 import { queryParamsGenerate } from "../utils";
 import printer from "../assets/icons/print-solid.svg";
+import moment from "moment";
 
 export default class Goods extends Component {
   constructor(props) {
@@ -26,6 +27,7 @@ export default class Goods extends Component {
         total: "",
         name: "",
       },
+      searchValue: "",
     };
   }
 
@@ -53,6 +55,10 @@ export default class Goods extends Component {
       this.state.pagination.page = 1;
       this.getNoteTable();
     }
+    if( prevState.searchValue !== this.state.searchValue){
+        this.handleSearch(this?.state?.searchValue)
+        console.log(this?.state?.searchValue,'search')
+      }
   }
 
   updatePagination = (newPagination) => {
@@ -64,7 +70,30 @@ export default class Goods extends Component {
       },
     }));
   };
-
+  handleSearch = (value) => {
+    const filteredItems = this?.state?.goodsData?.filter((items) => {
+      console.log(items);
+      return (
+        items?.docNo?.toLocaleLowerCase().includes(value.toLowerCase()) ||
+        moment(items?.docDate)?.format(`DD/MM/YYYY`).includes(value) ||
+        items.docRef1.toLocaleLowerCase().includes(value.toLocaleLowerCase()) ||
+        items.supplyNo
+          .toString()
+          .toLocaleLowerCase()
+          .includes(value.toLocaleLowerCase()) ||
+        items?.docAmt
+          ?.toString()
+          .toLocaleLowerCase()
+          ?.includes(value.toLocaleLowerCase())
+      );
+    });
+    this.setFilteredData(filteredItems);
+  };
+  updateSearch = (value) => {
+    this.setState((prevState) => ({
+      searchValue: value,
+    }));
+  };
   setFilteredData = (data) => {
     this.setState({
       slicedData: data,
@@ -117,14 +146,15 @@ export default class Goods extends Component {
     });
   };
 
-  routeto=()=> {
-    this.setState({ activeFilter: "Open" ,
-        filter: {
-            ...this.state.filter,
-            docStatus: 0,
-          },
+  routeto = () => {
+    this.setState({
+      activeFilter: "Open",
+      filter: {
+        ...this.state.filter,
+        docStatus: 0,
+      },
     });
-  }
+  };
 
   handleSort = (sortkey, order) => {
     console.log(sortkey);
@@ -265,6 +295,8 @@ export default class Goods extends Component {
               setFilteredData={this.setFilteredData}
               tableData={goodsData}
               orderBy={orderBy}
+              updateSearch={this.updateSearch}
+
             >
               {showSpinner ? (
                 <tr>

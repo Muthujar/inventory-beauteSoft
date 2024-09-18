@@ -16,7 +16,8 @@ export default class LimitSearch extends Component {
         limit,
         search,
         page,
-        updatePagination
+        updatePagination,
+        updateSearch
       } = this.props;
 
       const limitOptions = [
@@ -45,7 +46,7 @@ export default class LimitSearch extends Component {
 
               </div>
               <div className='search-table'>
-                <input placeholder='Search by' className='input-search'></input>
+              <input placeholder='Search by' className='input-search' onChange={(e)=>updateSearch(e?.target?.value)}></input>
               </div>
             </div>
     )
