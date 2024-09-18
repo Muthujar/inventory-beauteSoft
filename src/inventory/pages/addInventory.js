@@ -5,6 +5,7 @@ import { Modal } from "bootstrap";
 import Apiservice from "../constants/apiservice";
 import { queryParamsGenerate, stockHdrs } from "../utils";
 import withRouter from "../components/withRouter";
+import moment from "moment";
 
 class AddInventory extends Component {
   constructor(props) {
@@ -63,7 +64,7 @@ class AddInventory extends Component {
         docNo: "",
         // fields: { itemCode: true, itemDesc: true },
       },
-
+      searchValue:'',
       supplierInfo: {
         Attn: "",
         line1: "",
@@ -130,6 +131,10 @@ class AddInventory extends Component {
 
       this.setSupplierInfo();
     }
+    if( prevState.searchValue !== this.state.searchValue){
+        this.handleSearch(this?.state?.searchValue)
+        console.log(this?.state?.searchValue,'search')
+      }
   }
 
   componentWillUnmount() {
@@ -367,6 +372,52 @@ class AddInventory extends Component {
       slicedDetails: filtered,
     });
   };
+
+
+
+  handleSearch = (value) => {
+    const filteredItems = this?.state?.stockList?.filter((items) => {
+      console.log(items);
+      return (
+        items?.stockCode?.toString().toLocaleLowerCase().includes(value.toLowerCase()) ||
+        items?.stockName?.toString().toLocaleLowerCase().includes(value.toLowerCase()) ||
+        items?.itemUom?.toString().toLocaleLowerCase().includes(value.toLowerCase()) ||
+        items?.linkCode?.toString().toLocaleLowerCase().includes(value.toLowerCase()) ||
+        items?.brandCode?.toString().toLocaleLowerCase().includes(value.toLowerCase()) ||
+        items?.range?.toString().toLocaleLowerCase().includes(value.toLowerCase()) ||
+        items?.quantity?.toString().toLocaleLowerCase().includes(value.toLowerCase()) 
+
+        // moment(items?.docDate)?.format(`DD/MM/YYYY`).includes(value) ||
+        // items.docRef1.toLocaleLowerCase().includes(value.toLocaleLowerCase()) ||
+        // items.supplyNo
+        //   .toString()
+        //   .toLocaleLowerCase()
+        //   .includes(value.toLocaleLowerCase()) ||
+        // items?.docAmt
+        //   ?.toString()
+        //   .toLocaleLowerCase()
+        //   ?.includes(value.toLocaleLowerCase())
+      )
+    })
+    console.log(filteredItems,'filarr')
+    this.setFilteredData(filteredItems)
+    this.pageLimit();
+
+}
+
+setFilteredData = (data) => {
+    this.setState({
+        stockList: data,
+    });
+  };
+
+  updateSearch = (value) => {
+    console.log(value,'sear')
+    this.setState((prevState) => ({
+      searchValue: value,
+    }));
+  };
+
 
   optionClick(event, type) {
     console.log(event);
@@ -706,9 +757,7 @@ class AddInventory extends Component {
 
     console.log("Updated stockList:", updatedStockList);
 
-    // Set the updated state
     this.setState({ slicedDetails: updatedStockList }, () => {
-      // Callback to ensure state update has been applied
       console.log("State after setState:", this.state.slicedDetails);
     });
   };
@@ -1281,7 +1330,7 @@ class AddInventory extends Component {
 
           {activeTab === "detail" ? (
             <div className="tab-detail">
-              {!this.props.docNo && slicedDetails?.length > 0 && (
+              {!this.props.docNo  && (
                 <div className="detail-filter">
                   <div className="section-div ">
                     <input
@@ -1318,17 +1367,24 @@ class AddInventory extends Component {
                       placeholder="Search by item Code "
                       className="input-field a"
                       type="string"
+                    //   value={this.state.searchValue}
+                      onChange={(e)=>this.updateSearch(e?.target?.value)}
+                    //   onChange={(e) => this.updateSearch(e, "docRemk1")}
+
                     ></input>
                   </div>
                 </div>
               )}
 
               <div className="table-detail">
-                {!this.props.docNo && slicedDetails?.length > 0 ? (
+                {!this.props.docNo  ? (
                   <Table
                     headerDetails={headerDetails}
                     pagination={supplyPagination}
                     updatePagination={this.updatePagination}
+                    // updateSearch={this.updateSearch}
+                    // setFilteredData={this.setFilteredData}
+
                   >
                     {showSpinner ? (
                       <tr>

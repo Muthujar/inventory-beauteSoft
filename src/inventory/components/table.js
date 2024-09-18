@@ -166,8 +166,8 @@ export default class Table extends Component {
                   )}
                 </tr>
               </thead>
-              <tbody>{children}</tbody>
-            </table>
+              <tbody >{children}</tbody>
+              </table>
           </div>
           {pagination && (
             <Pagination

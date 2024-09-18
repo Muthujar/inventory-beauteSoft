@@ -39,30 +39,51 @@ export default class Goods extends Component {
     this.getNoteTable();
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    // Check if the page number has changed
+  componentDidUpdate = async (prevProps, prevState) => {
+    const { pagination, filter, goodsData } = this.state;
+
     if (
-      prevState.pagination.limit !== this.state.pagination.limit ||
-      prevState.pagination.page !== this.state.pagination.page ||
-      prevState.pagination.total !== this.state.pagination.total ||
-      prevState.pagination.name !== this.state.pagination.name
+      prevState.pagination.limit !== pagination.limit ||
+      prevState.pagination.page !== pagination.page ||
+      prevState.pagination.total !== pagination.total ||
+      prevState.pagination.name !== pagination.name
     ) {
-      this.pageLimit();
-    }
-    if (prevState.filter.docStatus !== this.state.filter.docStatus) {
-      this.state.goodsData = [];
-      this.state.slicedData = [];
-      this.state.pagination.page = 1;
-      this.getNoteTable();
-    }
-    if( prevState.searchValue !== this.state.searchValue){
-        this.handleSearch(this?.state?.searchValue)
-        console.log(this?.state?.searchValue,'search')
+      if (pagination.name) {
+        console.log("Searching with pagination.name");
+
+        const data = await this.handleSearch(pagination.name);
+        this.pageLimit(data);
+
+        this.updatePagination({
+          total: data.length,
+        });
+      } else {
+        console.log("No search term, using goodsData");
+
+        this.updatePagination({
+          total: goodsData.length,
+        });
+
+        this.pageLimit(goodsData);
       }
-  }
+    }
+
+    // Check if the filter's docStatus has changed
+    if (prevState.filter.docStatus !== filter.docStatus) {
+      this.setState(
+        {
+          goodsData: [],
+          slicedData: [],
+          pagination: { ...pagination, page: 1 },
+        },
+        () => {
+          this.getNoteTable();
+        }
+      );
+    }
+  };
 
   updatePagination = (newPagination) => {
-    // this.setState({ pagination: newPagination });
     this.setState((prevState) => ({
       pagination: {
         ...prevState.pagination,
@@ -70,31 +91,81 @@ export default class Goods extends Component {
       },
     }));
   };
+
+  //   handleSearch = async (value) => {
+  //     console.log(value, 'value');
+
+  //     const filteredItems = this?.state?.goodsData?.filter((items) => {
+  //       console.log(items);
+  //       return (
+  //         items?.docNo?.toLocaleLowerCase().includes(value.toLowerCase()) ||
+  //         moment(items?.docDate)?.format(`DD/MM/YYYY`).includes(value) ||
+  //         items.docRef1.toLocaleLowerCase().includes(value.toLocaleLowerCase()) ||
+  //         items.supplyNo
+  //           .toString()
+  //           .toLocaleLowerCase()
+  //           .includes(value.toLocaleLowerCase()) ||
+  //         items?.docAmt
+  //           ?.toString()
+  //           .toLocaleLowerCase()
+  //           ?.includes(value.toLocaleLowerCase())
+  //       );
+  //     });
   handleSearch = (value) => {
-    const filteredItems = this?.state?.goodsData?.filter((items) => {
-      console.log(items);
-      return (
-        items?.docNo?.toLocaleLowerCase().includes(value.toLowerCase()) ||
-        moment(items?.docDate)?.format(`DD/MM/YYYY`).includes(value) ||
-        items.docRef1.toLocaleLowerCase().includes(value.toLocaleLowerCase()) ||
-        items.supplyNo
-          .toString()
-          .toLocaleLowerCase()
-          .includes(value.toLocaleLowerCase()) ||
-        items?.docAmt
-          ?.toString()
-          .toLocaleLowerCase()
-          ?.includes(value.toLocaleLowerCase())
-      );
+    let debounceTimer;
+    this.setState({ showSpinner: true });
+
+    return new Promise((resolve, reject) => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+
+      debounceTimer = setTimeout(() => {
+        try {
+          console.log(value, "value");
+
+          const filteredItems = this?.state?.goodsData?.filter((items) => {
+            return (
+              items?.docNo?.toLowerCase().includes(value.toLowerCase()) ||
+              moment(items?.docDate)?.format("DD/MM/YYYY").includes(value) ||
+              items?.docRef1?.toLowerCase().includes(value.toLowerCase()) ||
+              items?.supplyNo
+                ?.toString()
+                .toLowerCase()
+                .includes(value.toLowerCase()) ||
+              items?.docAmt
+                ?.toString()
+                ?.toLowerCase()
+                ?.includes(value.toLowerCase())
+            );
+          });
+          let pagina = {
+            total: filteredItems.length,
+          };
+          this.updatePagination(pagina);
+
+          console.log(filteredItems, "filteredItems");
+
+          resolve(filteredItems);
+        } catch (error) {
+          reject(error);
+        }
+      }, 500); // Adjust debounce time (300ms in this case)
     });
-    this.setFilteredData(filteredItems);
   };
-  updateSearch = (value) => {
-    this.setState((prevState) => ({
-      searchValue: value,
-    }));
-  };
-  setFilteredData = (data) => {
+  // console.log(filteredItems, 'filteredItems');
+
+  // await this.setState({
+  //   goodsData: filteredItems,
+  // });
+
+  //   updateSearch = (value) => {
+  //     this.setState((prevState) => ({
+  //       searchValue: value,
+  //     }));
+  //   };
+
+  setSlicedData = (data) => {
     this.setState({
       slicedData: data,
     });
@@ -103,12 +174,13 @@ export default class Goods extends Component {
   printNote = (item) => {
     window.print(item);
   };
-  pageLimit = () => {
+  pageLimit = (filtered) => {
     const { pagination, goodsData } = this.state;
     let startIndex = (pagination.page - 1) * pagination.limit;
     let endIndex = startIndex + pagination.limit;
-    const filtered = goodsData?.slice(startIndex, endIndex);
-    this.setFilteredData(filtered);
+    const sliced = filtered?.slice(startIndex, endIndex);
+    this.setSlicedData(sliced);
+    this.setState({ showSpinner: false });
   };
 
   getNoteTable = () => {
@@ -124,26 +196,28 @@ export default class Goods extends Component {
           showSpinner: false,
         });
 
-        this.pageLimit();
+        this.pageLimit(res);
       })
       .catch((err) => {});
   };
 
   handleFilter = (status, data) => {
-    console.log(status);
+    const value = status === "Open" ? 0 : status === "Posted" ? 7 : "";
 
-    let value;
-    if (status === "Open") value = 0;
-    else if (status === "Posted") value = 7;
-    else value = "";
-    this.setState({
+    this.setState((prevState) => ({
       activeFilter: status,
       propDocNo: data,
+      pagination: {
+        ...prevState.pagination,
+        name: "",
+        page: 1,
+      },
+      showSpinner: true,
       filter: {
-        ...this.state.filter,
+        ...prevState.filter,
         docStatus: value,
       },
-    });
+    }));
   };
 
   routeto = () => {
@@ -287,8 +361,10 @@ export default class Goods extends Component {
             docNo={this.state.propDocNo ?? null}
           />
         ) : (
-          <div>
-            <Table
+            <div
+          >
+            <Table 
+            
               headerDetails={headerDetails}
               pagination={pagination}
               updatePagination={this.updatePagination}
@@ -296,13 +372,16 @@ export default class Goods extends Component {
               tableData={goodsData}
               orderBy={orderBy}
               updateSearch={this.updateSearch}
-
             >
               {showSpinner ? (
                 <tr>
-                  <div className="spinner-border loadingSpinner" role="status">
-                    <span className="sr-only">Loading...</span>
-                  </div>
+                  <td colSpan={7}>
+                    <div className="spinner-container">
+                      <div className="spinner-border" role="status">
+                        <span className="sr-only">Loading...</span>
+                      </div>
+                    </div>
+                  </td>
                 </tr>
               ) : slicedData?.length > 0 ? (
                 slicedData.map((item, i) => {
