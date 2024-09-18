@@ -150,20 +150,10 @@ export default class Goods extends Component {
         } catch (error) {
           reject(error);
         }
-      }, 500); // Adjust debounce time (300ms in this case)
+      }, 500); 
     });
   };
-  // console.log(filteredItems, 'filteredItems');
 
-  // await this.setState({
-  //   goodsData: filteredItems,
-  // });
-
-  //   updateSearch = (value) => {
-  //     this.setState((prevState) => ({
-  //       searchValue: value,
-  //     }));
-  //   };
 
   setSlicedData = (data) => {
     this.setState({
@@ -368,10 +358,10 @@ export default class Goods extends Component {
               headerDetails={headerDetails}
               pagination={pagination}
               updatePagination={this.updatePagination}
-              setFilteredData={this.setFilteredData}
+            //   setFilteredData={this.setFilteredData}
               tableData={goodsData}
               orderBy={orderBy}
-              updateSearch={this.updateSearch}
+            //   updateSearch={this.updateSearch}
             >
               {showSpinner ? (
                 <tr>

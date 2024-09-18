@@ -64,7 +64,7 @@ class AddInventory extends Component {
         docNo: "",
         // fields: { itemCode: true, itemDesc: true },
       },
-      searchValue:'',
+      searchValue: "",
       supplierInfo: {
         Attn: "",
         line1: "",
@@ -112,18 +112,39 @@ class AddInventory extends Component {
       await this.getStockDetails();
     }
 
-    this.pageLimit();
+    // this.pageLimit();
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate=async(prevProps, prevState)=> {
+    const { supplyPagination,stockList,slicedDetails } = this.state;
+
+
     if (
-      prevState.supplyPagination.limit !== this.state.supplyPagination.limit ||
-      prevState.supplyPagination.page !== this.state.supplyPagination.page ||
-      prevState.supplyPagination.total !== this.state.supplyPagination.total ||
-      prevState.supplyPagination.name !== this.state.supplyPagination.name
+      prevState.supplyPagination.limit !== supplyPagination.limit ||
+      prevState.supplyPagination.page !== supplyPagination.page ||
+      prevState.supplyPagination.total !== supplyPagination.total ||
+      prevState.supplyPagination.name !== supplyPagination.name
     ) {
-      this.pageLimit();
-    }
+        if (supplyPagination.name) {
+            console.log("Searching with pagination.name");
+    
+            const data = await this.handleSearch(supplyPagination.name);
+            console.log(data,'datasearch')
+            this.pageLimit(data);
+    
+            this.updatePagination({
+              total: data.length,
+            });
+          } else {
+            console.log("No search term, using goodsData");
+    
+            this.updatePagination({
+              total: stockList.length,
+            });
+    
+            this.pageLimit(stockList);
+          }    }
+
     if (prevState.cartData.length !== this.state.cartData.length)
       this.calcTotalAmount();
     if (prevState.stockHdrs.supplyNo !== this.state.stockHdrs.supplyNo) {
@@ -131,10 +152,7 @@ class AddInventory extends Component {
 
       this.setSupplierInfo();
     }
-    if( prevState.searchValue !== this.state.searchValue){
-        this.handleSearch(this?.state?.searchValue)
-        console.log(this?.state?.searchValue,'search')
-      }
+
   }
 
   componentWillUnmount() {
@@ -251,10 +269,10 @@ class AddInventory extends Component {
           ...prevState.stockHdrs,
           supplyNo: supplycode ? supplycode : supplyOption[0]?.value || null, // Set default to first option's value if it exists
         },
-        supplyPagination: {
-          ...prevState.supplyPagination,
-          total: prevState.stockHdrsDetails.length,
-        },
+        // supplyPagination: {
+        //   ...prevState.supplyPagination,
+        //   total: prevState.stockHdrsDetails.length,
+        // },
         showSpinner: false,
       }));
     } catch (err) {
@@ -274,7 +292,7 @@ class AddInventory extends Component {
       console.log(res);
       if (!res) return;
       const docNo = res[0].controlPrefix + res[0].siteCode + res[0].controlNo;
-    //   const docNo = res[0].controlPrefix + res[0].siteCode + 110050
+      //   const docNo = res[0].controlPrefix + res[0].siteCode + 110050
 
       console.log(docNo, "docno");
       this.setState((prevState) => ({
@@ -331,6 +349,7 @@ class AddInventory extends Component {
   }
 
   async getStockDetails() {
+
     try {
       // Await the API call
       const res = await Apiservice().getAPI(
@@ -349,75 +368,133 @@ class AddInventory extends Component {
         stockList: updatedRes,
         supplyPagination: {
           ...prevState.supplyPagination,
-          total: res.length,
+          total: updatedRes.length,
         },
         showSpinner: false,
       }));
-
-      // Call pageLimit (assuming this function handles pagination)
-      this.pageLimit();
+      console.log(updatedRes,'stoclupd')
+      this.pageLimit(updatedRes);
     } catch (err) {
       // Handle the error
       console.error("Error fetching supply details:", err);
     }
   }
 
-  pageLimit = () => {
+  pageLimit = (filtered) => {
     const { supplyPagination, stockList, stockHdrsDetails } = this.state;
     // console.log(stockList, "su");
     let startIndex = (supplyPagination.page - 1) * supplyPagination.limit;
     let endIndex = startIndex + supplyPagination.limit;
-    const filtered = stockList?.slice(startIndex, endIndex);
+    const sliced = filtered?.slice(startIndex, endIndex);
+    console.log(sliced,'sliced')
+    this.setSlicedData(sliced);
+    this.setState({ showSpinner: false });
+
+
+  };
+
+  setSlicedData = (data) => {
     this.setState({
-      slicedDetails: filtered,
+        slicedDetails: data,
+    });
+  };
+//   handleSearch = (value) => {
+//     const filteredItems = this?.state?.stockList?.filter((items) => {
+//       console.log(items);
+//       return (
+//         items?.stockCode
+//           ?.toString()
+//           .toLocaleLowerCase()
+//           .includes(value.toLowerCase()) ||
+//         items?.stockName
+//           ?.toString()
+//           .toLocaleLowerCase()
+//           .includes(value.toLowerCase()) ||
+//         items?.itemUom
+//           ?.toString()
+//           .toLocaleLowerCase()
+//           .includes(value.toLowerCase()) ||
+//         items?.linkCode
+//           ?.toString()
+//           .toLocaleLowerCase()
+//           .includes(value.toLowerCase()) ||
+//         items?.brandCode
+//           ?.toString()
+//           .toLocaleLowerCase()
+//           .includes(value.toLowerCase()) ||
+//         items?.range
+//           ?.toString()
+//           .toLocaleLowerCase()
+//           .includes(value.toLowerCase()) ||
+//         items?.quantity
+//           ?.toString()
+//           .toLocaleLowerCase()
+//           .includes(value.toLowerCase())
+
+//       );
+//     });
+//     console.log(filteredItems, "filarr");
+//     this.setFilteredData(filteredItems);
+//     this.pageLimit();
+//   };
+
+  handleSearch = (value) => {
+    let debounceTimer;
+    this.setState({ showSpinner: true });
+  
+    return new Promise((resolve, reject) => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+  
+      debounceTimer = setTimeout(() => {
+        try {
+          const filteredItems = this?.state?.stockList?.filter((items) => {
+            return (
+              items?.stockCode?.toString()?.toLowerCase().includes(value.toLowerCase()) ||
+              items?.stockName?.toString()?.toLowerCase().includes(value.toLowerCase()) ||
+              items?.itemUom?.toString()?.toLowerCase().includes(value.toLowerCase()) ||
+              items?.linkCode?.toString()?.toLowerCase().includes(value.toLowerCase()) ||
+              items?.brandCode?.toString()?.toLowerCase().includes(value.toLowerCase()) ||
+              items?.range?.toString()?.toLowerCase().includes(value.toLowerCase()) ||
+              items?.quantity?.toString()?.toLowerCase().includes(value.toLowerCase())
+            );
+          });
+  
+          console.log(filteredItems, "filteredItems");
+  
+          // Assuming you update the pagination based on filtered items here as well
+          let pagina = {
+            total: filteredItems.length,
+          };
+          this.updatePagination(pagina);
+  
+        //   this.setFilteredData(filteredItems); // Update the filtered data
+        //   this.pageLimit(); // Call page limit logic
+  
+          resolve(filteredItems);
+        } catch (error) {
+          reject(error);
+        }
+      }, 500); // Debounce delay set to 500ms
     });
   };
 
-
-
-  handleSearch = (value) => {
-    const filteredItems = this?.state?.stockList?.filter((items) => {
-      console.log(items);
-      return (
-        items?.stockCode?.toString().toLocaleLowerCase().includes(value.toLowerCase()) ||
-        items?.stockName?.toString().toLocaleLowerCase().includes(value.toLowerCase()) ||
-        items?.itemUom?.toString().toLocaleLowerCase().includes(value.toLowerCase()) ||
-        items?.linkCode?.toString().toLocaleLowerCase().includes(value.toLowerCase()) ||
-        items?.brandCode?.toString().toLocaleLowerCase().includes(value.toLowerCase()) ||
-        items?.range?.toString().toLocaleLowerCase().includes(value.toLowerCase()) ||
-        items?.quantity?.toString().toLocaleLowerCase().includes(value.toLowerCase()) 
-
-        // moment(items?.docDate)?.format(`DD/MM/YYYY`).includes(value) ||
-        // items.docRef1.toLocaleLowerCase().includes(value.toLocaleLowerCase()) ||
-        // items.supplyNo
-        //   .toString()
-        //   .toLocaleLowerCase()
-        //   .includes(value.toLocaleLowerCase()) ||
-        // items?.docAmt
-        //   ?.toString()
-        //   .toLocaleLowerCase()
-        //   ?.includes(value.toLocaleLowerCase())
-      )
-    })
-    console.log(filteredItems,'filarr')
-    this.setFilteredData(filteredItems)
-    this.pageLimit();
-
-}
-
-setFilteredData = (data) => {
+  setFilteredData = (data) => {
     this.setState({
-        stockList: data,
+      stockList: data,
     });
   };
 
   updateSearch = (value) => {
-    console.log(value,'sear')
+    console.log(value, "sear");
     this.setState((prevState) => ({
-      searchValue: value,
+      supplyPagination: {
+        ...prevState.supplyPagination,
+        name:value
+      },
     }));
   };
-
 
   optionClick(event, type) {
     console.log(event);
@@ -512,66 +589,67 @@ setFilteredData = (data) => {
     console.log(data, "data for editing");
 
     try {
-          const item = data[0];
-          if (item.docId) {
-            for (let i = 0; i < data.length; i++) {
-                let body=data[i]
+      const item = data[0];
+      if (item.docId) {
+        for (let i = 0; i < data.length; i++) {
+          let body = data[i];
           //   const res = await Apiservice().patchAPI(`StkMovdocDtls/update?[where][docId]=${item.docId}`, item);
-            const res = await Apiservice().patchAPI(`StkMovdocDtls/${item.docId}`, body);
-  
-            console.log(res, `Updated item with docId: ${item.docId}`);
-            }
-          } else {
-            const res = await Apiservice().postAPI("StkMovdocDtls", data);
-            console.log(res, "Created new item");
-          //   this.addNewControlNumber(); // Call other necessary functions
-          //   this.pageLimit();
-        }
-  
-    // try {
-    //   
-    //     const item = data[i];
-    //     if (item.docId) {
-    //     //   const res = await Apiservice().patchAPI(`StkMovdocDtls/update?[where][docId]=${item.docId}`, item);
-    //       const res = await Apiservice().patchAPI(`StkMovdocDtls/${item.docId}`, item);
+          const res = await Apiservice().patchAPI(
+            `StkMovdocDtls/${item.docId}`,
+            body
+          );
 
-    //       console.log(res, `Updated item with docId: ${item.docId}`);
-    //     } else {
-    //       const res = await Apiservice().postAPI("StkMovdocDtls", item);
-    //       console.log(res, "Created new item");
-    //     }
-    //   }
-  
+          console.log(res, `Updated item with docId: ${item.docId}`);
+        }
+      } else {
+        const res = await Apiservice().postAPI("StkMovdocDtls", data);
+        console.log(res, "Created new item");
+        //   this.addNewControlNumber(); // Call other necessary functions
+        //   this.pageLimit();
+      }
+
+      // try {
+      //
+      //     const item = data[i];
+      //     if (item.docId) {
+      //     //   const res = await Apiservice().patchAPI(`StkMovdocDtls/update?[where][docId]=${item.docId}`, item);
+      //       const res = await Apiservice().patchAPI(`StkMovdocDtls/${item.docId}`, item);
+
+      //       console.log(res, `Updated item with docId: ${item.docId}`);
+      //     } else {
+      //       const res = await Apiservice().postAPI("StkMovdocDtls", item);
+      //       console.log(res, "Created new item");
+      //     }
+      //   }
+
       // After all updates/creates
       this.setState({
         showSpinner: false,
       });
-  
-
     } catch (err) {
       console.error("Error during edit or create:", err); // handle the error
     }
   }
 
-//   async postStockDetails() {
-//     const { stockHdrsDetails, cartData } = this.state;
-//     let data = [...cartData];
-//     console.log(data, "data stock h det post");
-//     try {
-//       const res = await Apiservice().postAPI("StkMovdocDtls", data);
-//       console.log(res, "post");
+  //   async postStockDetails() {
+  //     const { stockHdrsDetails, cartData } = this.state;
+  //     let data = [...cartData];
+  //     console.log(data, "data stock h det post");
+  //     try {
+  //       const res = await Apiservice().postAPI("StkMovdocDtls", data);
+  //       console.log(res, "post");
 
-//       this.setState({
-//         showSpinner: false,
-//       });
+  //       this.setState({
+  //         showSpinner: false,
+  //       });
 
-//       this.addNewControlNumber();
-//       this.pageLimit();
-//     } catch (err) {
-//       console.error(err); // handle the error
-//     }
-//   }
-  async postStockHdrDetails(data,type) {
+  //       this.addNewControlNumber();
+  //       this.pageLimit();
+  //     } catch (err) {
+  //       console.error(err); // handle the error
+  //     }
+  //   }
+  async postStockHdrDetails(data, type) {
     const { stockHdrsDetails, cartData } = this.state;
     // let data = [...cartData];
     console.log(data, "data stock h det post");
@@ -585,14 +663,17 @@ setFilteredData = (data) => {
         });
 
         this.addNewControlNumber();
-        this.pageLimit();
+        // this.pageLimit();
       } catch (err) {
         console.error(err); // handle the error
       }
     } else {
       try {
-    //   const  res = await Apiservice().patchAPI(`StkMovdocHdrs/update?[where][docNo]=${data.docNo}`, data);
-      const  res = await Apiservice().patchAPI(`StkMovdocHdrs/${data.poId}`, data);
+        //   const  res = await Apiservice().patchAPI(`StkMovdocHdrs/update?[where][docNo]=${data.docNo}`, data);
+        const res = await Apiservice().patchAPI(
+          `StkMovdocHdrs/${data.poId}`,
+          data
+        );
 
         console.log(res, "patch");
 
@@ -608,6 +689,11 @@ setFilteredData = (data) => {
     }
   }
 
+  print(){
+    console.log(this.state.stockList,'stlis')
+    console.log(this.state.slicedDetails,'sliced')
+
+  }
   async onSubmit(e, type) {
     e.preventDefault();
     const { stockHdrs, supplierInfo, cartData, totalCart } = this.state;
@@ -623,74 +709,58 @@ setFilteredData = (data) => {
         movCode: "GRN",
         movType: "GRN",
         storeNo: stockHdrs.storeNo,
-        // fstoreNo: null,
-        // tstoreNo: null,
         supplyNo: stockHdrs.supplyNo,
         docRef1: stockHdrs.docRef1,
         docRef2: stockHdrs.docRef2,
-        // accCode: null,
-        // staffNo: null,
         docLines: null,
         docDate: stockHdrs.docDate,
         postDate: stockHdrs.postDate,
         docStatus: stockHdrs.docStatus,
         docTerm: stockHdrs.docTerm,
-        // docTime: null,
         docQty: totalCart.qty,
-        // docFoc: null,
-        // docDisc: null,
         docAmt: totalCart.amt,
-        // docTrnspt: null,
-        // docTax: null,
         docAttn: supplierInfo.Attn,
         docRemk1: stockHdrs.docRemk1,
-        // docRemk2: null,
-        // docRemk3: null,
-        // docShip: null,
+
         bname: supplierInfo.Attn,
         baddr1: supplierInfo.line1,
         baddr2: supplierInfo.line2,
         baddr3: supplierInfo.line3,
         bpostcode: supplierInfo.pcode,
-        // bstate: null,
-        // bcity: null,
-        // bcountry: null,
+  
         daddr1: supplierInfo.sline1,
         daddr2: supplierInfo.sline2,
         daddr3: supplierInfo.sline3,
         dpostcode: supplierInfo.spcode,
-        // dstate: null,
-        // dcity: null,
-        // dcountry: null,
-        // cancelQty: null,
-        // recStatus: null,
-        // recExpect: null,
-        // recTtl: null,
+
         createUser: stockHdrs.createUser,
         createDate: null,
-      }
-      if (stockHdrs?.poId)data.poId=stockHdrs?.poId
+      };
+      if (stockHdrs?.poId) data.poId = stockHdrs?.poId;
 
       if (
         type === "save" &&
         !this.props?.docNo &&
         this.state.stockHdrs?.docStatus === 0
       ) {
-        this.postStockHdrDetails(data, "create");
-        this.postStockDetails();
+       await this.postStockHdrDetails(data, "create");
+        await this.postStockDetails();
+
+
       } else if (type === "save" && this.props.docNo) {
         this.postStockHdrDetails(data, "update");
         this.postStockDetails();
-
       } else if (type === "post" && this.props.docNo) {
-        data={
-            ...data,
-            docStatus:7
-        }
+        data = {
+          ...data,
+          docStatus: 7,
+        };
         this.postStockHdrDetails(data, "updateStatus");
         this.postStockDetails();
-
       }
+    //   this.router.navigate('/list');
+      this.props.routeto()
+
     } else {
       console.log("Form is invalid, fix the errors and resubmit.");
     }
@@ -783,6 +853,7 @@ setFilteredData = (data) => {
   };
 
   updatePagination = (newPagination) => {
+    console.log(newPagination,'search')
     this.setState((prevState) => ({
       supplyPagination: {
         ...prevState.supplyPagination,
@@ -798,7 +869,6 @@ setFilteredData = (data) => {
   }
 
   onSave = () => {
-
     const { cartData, editData, editIndex } = this.state;
     let updatedCart = [...cartData];
     let updated = { ...updatedCart[editIndex], ...editData };
@@ -1330,7 +1400,7 @@ setFilteredData = (data) => {
 
           {activeTab === "detail" ? (
             <div className="tab-detail">
-              {!this.props.docNo  && (
+              {!this.props.docNo && (
                 <div className="detail-filter">
                   <div className="section-div ">
                     <input
@@ -1367,33 +1437,37 @@ setFilteredData = (data) => {
                       placeholder="Search by item Code "
                       className="input-field a"
                       type="string"
-                    //   value={this.state.searchValue}
-                      onChange={(e)=>this.updateSearch(e?.target?.value)}
-                    //   onChange={(e) => this.updateSearch(e, "docRemk1")}
-
+                        value={supplyPagination.name}
+                      onChange={(e) => this.updateSearch(e?.target.value)}
+                      //   onChange={(e) => this.updateSearch(e, "docRemk1")}
                     ></input>
                   </div>
                 </div>
               )}
 
               <div className="table-detail">
-                {!this.props.docNo  ? (
+                {!this.props.docNo ? (
                   <Table
                     headerDetails={headerDetails}
                     pagination={supplyPagination}
                     updatePagination={this.updatePagination}
                     // updateSearch={this.updateSearch}
                     // setFilteredData={this.setFilteredData}
-
                   >
                     {showSpinner ? (
                       <tr>
-                        <td>hgh</td>
+                        <td colSpan={11}>
+                          <div className="spinner-container">
+                            <div className="spinner-border" role="status">
+                              <span className="sr-only">Loading...</span>
+                            </div>
+                          </div>
+                        </td>
                       </tr>
                     ) : slicedDetails?.length > 0 ? (
                       slicedDetails.map((item, i) => {
                         return (
-                          <tr>
+                          <tr key={i}>
                             <td>{item.stockCode}</td>
                             <td>{item.stockName}</td>
                             <td>{item.itemUom}</td>
@@ -1427,7 +1501,13 @@ setFilteredData = (data) => {
                           </tr>
                         );
                       })
-                    ) : null}
+                    ) : (
+                      <tr className="no-data-row">
+                        <td className="no-data-cell" colSpan={11}>
+                          No Data
+                        </td>
+                      </tr>
+                    )}
                   </Table>
                 ) : (
                   ""
@@ -1706,7 +1786,7 @@ setFilteredData = (data) => {
             onClick={(e) => {
               this.onSubmit(e, "save");
             }}
-            className={`btn save ${stockHdrs.docStatus===7 &&'disabled'} `}
+            className={`btn save ${stockHdrs.docStatus === 7 && "disabled"} `}
           >
             Save
           </div>
@@ -1714,11 +1794,15 @@ setFilteredData = (data) => {
             onClick={(e) => {
               this.onSubmit(e, "post");
             }}
-            className={`btn post ${stockHdrs.docStatus===7 || !this.props.docNo ?'disabled':''} `}
+            className={`btn post ${
+              stockHdrs.docStatus === 7 || !this.props.docNo ? "disabled" : ""
+            } `}
           >
             Post
           </div>
-          <div onClick={() => this.props.routeto()} className="btn list">
+          {/* <div onClick={() => this.props.routeto()} className="btn list"> */}
+          <div onClick={() => this.print()} className="btn list">
+
             List
           </div>
         </div>
