@@ -83,10 +83,12 @@ class AddInventory extends Component {
   }
   async componentDidMount() {
     console.log(this.props);
-    if (this.props.docNo) {
+    const { docData } = this.props;
+
+    if (docData) {
       const filter = {
         movCode: "GRN",
-        docNo: this.props.docNo,
+        docNo: docData?.docNo,
       };
       //   this.setState((prevState) => ({
       //     filter: {
@@ -96,6 +98,8 @@ class AddInventory extends Component {
       //     },
       //   }));
       await this.getStockHdr(filter);
+      if (docData?.docStatus !== 7) await this.getStockDetails();
+
       await this.getStockHdrDetails(filter);
       await this.getSupplyList(this.state.stockHdrs.supplyNo);
     } else {
@@ -115,9 +119,8 @@ class AddInventory extends Component {
     // this.pageLimit();
   }
 
-  componentDidUpdate=async(prevProps, prevState)=> {
-    const { supplyPagination,stockList,slicedDetails } = this.state;
-
+  componentDidUpdate = async (prevProps, prevState) => {
+    const { supplyPagination, stockList, slicedDetails } = this.state;
 
     if (
       prevState.supplyPagination.limit !== supplyPagination.limit ||
@@ -125,25 +128,26 @@ class AddInventory extends Component {
       prevState.supplyPagination.total !== supplyPagination.total ||
       prevState.supplyPagination.name !== supplyPagination.name
     ) {
-        if (supplyPagination.name) {
-            console.log("Searching with pagination.name");
-    
-            const data = await this.handleSearch(supplyPagination.name);
-            console.log(data,'datasearch')
-            this.pageLimit(data);
-    
-            this.updatePagination({
-              total: data.length,
-            });
-          } else {
-            console.log("No search term, using goodsData");
-    
-            this.updatePagination({
-              total: stockList.length,
-            });
-    
-            this.pageLimit(stockList);
-          }    }
+      if (supplyPagination.name) {
+        console.log("Searching with pagination.name");
+
+        const data = await this.handleSearch(supplyPagination.name);
+        console.log(data, "datasearch");
+        this.pageLimit(data);
+
+        this.updatePagination({
+          total: data.length,
+        });
+      } else {
+        console.log("No search term, using goodsData");
+
+        this.updatePagination({
+          total: stockList.length,
+        });
+
+        this.pageLimit(stockList);
+      }
+    }
 
     if (prevState.cartData.length !== this.state.cartData.length)
       this.calcTotalAmount();
@@ -152,8 +156,7 @@ class AddInventory extends Component {
 
       this.setSupplierInfo();
     }
-
-  }
+  };
 
   componentWillUnmount() {
     this.setState({ stockHdrs: stockHdrs });
@@ -225,7 +228,7 @@ class AddInventory extends Component {
         },
       });
 
-      this.pageLimit();
+      //   this.pageLimit();
     } catch (err) {
       console.error(err); // handle error appropriately
     }
@@ -243,7 +246,7 @@ class AddInventory extends Component {
         showSpinner: false,
       });
 
-      this.pageLimit();
+      //   this.pageLimit();
     } catch (err) {
       console.error(err); // handle error appropriately
     }
@@ -349,7 +352,6 @@ class AddInventory extends Component {
   }
 
   async getStockDetails() {
-
     try {
       // Await the API call
       const res = await Apiservice().getAPI(
@@ -372,8 +374,8 @@ class AddInventory extends Component {
         },
         showSpinner: false,
       }));
-      console.log(updatedRes,'stoclupd')
-      this.pageLimit(updatedRes);
+      console.log(updatedRes, "stoclupd");
+      //   this.pageLimit(updatedRes);
     } catch (err) {
       // Handle the error
       console.error("Error fetching supply details:", err);
@@ -386,92 +388,111 @@ class AddInventory extends Component {
     let startIndex = (supplyPagination.page - 1) * supplyPagination.limit;
     let endIndex = startIndex + supplyPagination.limit;
     const sliced = filtered?.slice(startIndex, endIndex);
-    console.log(sliced,'sliced')
+    console.log(sliced, "sliced");
     this.setSlicedData(sliced);
     this.setState({ showSpinner: false });
-
-
   };
 
   setSlicedData = (data) => {
     this.setState({
-        slicedDetails: data,
+      slicedDetails: data,
     });
   };
-//   handleSearch = (value) => {
-//     const filteredItems = this?.state?.stockList?.filter((items) => {
-//       console.log(items);
-//       return (
-//         items?.stockCode
-//           ?.toString()
-//           .toLocaleLowerCase()
-//           .includes(value.toLowerCase()) ||
-//         items?.stockName
-//           ?.toString()
-//           .toLocaleLowerCase()
-//           .includes(value.toLowerCase()) ||
-//         items?.itemUom
-//           ?.toString()
-//           .toLocaleLowerCase()
-//           .includes(value.toLowerCase()) ||
-//         items?.linkCode
-//           ?.toString()
-//           .toLocaleLowerCase()
-//           .includes(value.toLowerCase()) ||
-//         items?.brandCode
-//           ?.toString()
-//           .toLocaleLowerCase()
-//           .includes(value.toLowerCase()) ||
-//         items?.range
-//           ?.toString()
-//           .toLocaleLowerCase()
-//           .includes(value.toLowerCase()) ||
-//         items?.quantity
-//           ?.toString()
-//           .toLocaleLowerCase()
-//           .includes(value.toLowerCase())
+  //   handleSearch = (value) => {
+  //     const filteredItems = this?.state?.stockList?.filter((items) => {
+  //       console.log(items);
+  //       return (
+  //         items?.stockCode
+  //           ?.toString()
+  //           .toLocaleLowerCase()
+  //           .includes(value.toLowerCase()) ||
+  //         items?.stockName
+  //           ?.toString()
+  //           .toLocaleLowerCase()
+  //           .includes(value.toLowerCase()) ||
+  //         items?.itemUom
+  //           ?.toString()
+  //           .toLocaleLowerCase()
+  //           .includes(value.toLowerCase()) ||
+  //         items?.linkCode
+  //           ?.toString()
+  //           .toLocaleLowerCase()
+  //           .includes(value.toLowerCase()) ||
+  //         items?.brandCode
+  //           ?.toString()
+  //           .toLocaleLowerCase()
+  //           .includes(value.toLowerCase()) ||
+  //         items?.range
+  //           ?.toString()
+  //           .toLocaleLowerCase()
+  //           .includes(value.toLowerCase()) ||
+  //         items?.quantity
+  //           ?.toString()
+  //           .toLocaleLowerCase()
+  //           .includes(value.toLowerCase())
 
-//       );
-//     });
-//     console.log(filteredItems, "filarr");
-//     this.setFilteredData(filteredItems);
-//     this.pageLimit();
-//   };
+  //       );
+  //     });
+  //     console.log(filteredItems, "filarr");
+  //     this.setFilteredData(filteredItems);
+  //     this.pageLimit();
+  //   };
 
   handleSearch = (value) => {
     let debounceTimer;
     this.setState({ showSpinner: true });
-  
+
     return new Promise((resolve, reject) => {
       if (debounceTimer) {
         clearTimeout(debounceTimer);
       }
-  
+
       debounceTimer = setTimeout(() => {
         try {
           const filteredItems = this?.state?.stockList?.filter((items) => {
             return (
-              items?.stockCode?.toString()?.toLowerCase().includes(value.toLowerCase()) ||
-              items?.stockName?.toString()?.toLowerCase().includes(value.toLowerCase()) ||
-              items?.itemUom?.toString()?.toLowerCase().includes(value.toLowerCase()) ||
-              items?.linkCode?.toString()?.toLowerCase().includes(value.toLowerCase()) ||
-              items?.brandCode?.toString()?.toLowerCase().includes(value.toLowerCase()) ||
-              items?.range?.toString()?.toLowerCase().includes(value.toLowerCase()) ||
-              items?.quantity?.toString()?.toLowerCase().includes(value.toLowerCase())
+              items?.stockCode
+                ?.toString()
+                ?.toLowerCase()
+                .includes(value.toLowerCase()) ||
+              items?.stockName
+                ?.toString()
+                ?.toLowerCase()
+                .includes(value.toLowerCase()) ||
+              items?.itemUom
+                ?.toString()
+                ?.toLowerCase()
+                .includes(value.toLowerCase()) ||
+              items?.linkCode
+                ?.toString()
+                ?.toLowerCase()
+                .includes(value.toLowerCase()) ||
+              items?.brandCode
+                ?.toString()
+                ?.toLowerCase()
+                .includes(value.toLowerCase()) ||
+              items?.range
+                ?.toString()
+                ?.toLowerCase()
+                .includes(value.toLowerCase()) ||
+              items?.quantity
+                ?.toString()
+                ?.toLowerCase()
+                .includes(value.toLowerCase())
             );
           });
-  
+
           console.log(filteredItems, "filteredItems");
-  
+
           // Assuming you update the pagination based on filtered items here as well
           let pagina = {
             total: filteredItems.length,
           };
           this.updatePagination(pagina);
-  
-        //   this.setFilteredData(filteredItems); // Update the filtered data
-        //   this.pageLimit(); // Call page limit logic
-  
+
+          //   this.setFilteredData(filteredItems); // Update the filtered data
+          //   this.pageLimit(); // Call page limit logic
+
           resolve(filteredItems);
         } catch (error) {
           reject(error);
@@ -491,7 +512,7 @@ class AddInventory extends Component {
     this.setState((prevState) => ({
       supplyPagination: {
         ...prevState.supplyPagination,
-        name:value
+        name: value,
       },
     }));
   };
@@ -585,49 +606,31 @@ class AddInventory extends Component {
 
   async postStockDetails() {
     const { cartData } = this.state; // Assuming cartData contains the data to be updated
-    let data = [...cartData];
-    console.log(data, "data for editing");
-
+    console.log(cartData, "data for editing");
+  
+    this.setState({ showSpinner: true });
+  
     try {
-      const item = data[0];
-      if (item.docId) {
-        for (let i = 0; i < data.length; i++) {
-          let body = data[i];
-          //   const res = await Apiservice().patchAPI(`StkMovdocDtls/update?[where][docId]=${item.docId}`, item);
-          const res = await Apiservice().patchAPI(
-            `StkMovdocDtls/${item.docId}`,
-            body
-          );
-
+      // Iterate over each item in cartData
+      for (let item of cartData) {
+        let res;
+  
+        if (item.docId) {
+          // PATCH request for existing items
+          res = await Apiservice().patchAPI(`StkMovdocDtls/${item.docId}`, item);
           console.log(res, `Updated item with docId: ${item.docId}`);
+        } else {
+          // POST request for new items
+          res = await Apiservice().postAPI("StkMovdocDtls", item);
+          console.log(res, "Created new item");
         }
-      } else {
-        const res = await Apiservice().postAPI("StkMovdocDtls", data);
-        console.log(res, "Created new item");
-        //   this.addNewControlNumber(); // Call other necessary functions
-        //   this.pageLimit();
       }
-
-      // try {
-      //
-      //     const item = data[i];
-      //     if (item.docId) {
-      //     //   const res = await Apiservice().patchAPI(`StkMovdocDtls/update?[where][docId]=${item.docId}`, item);
-      //       const res = await Apiservice().patchAPI(`StkMovdocDtls/${item.docId}`, item);
-
-      //       console.log(res, `Updated item with docId: ${item.docId}`);
-      //     } else {
-      //       const res = await Apiservice().postAPI("StkMovdocDtls", item);
-      //       console.log(res, "Created new item");
-      //     }
-      //   }
-
-      // After all updates/creates
-      this.setState({
-        showSpinner: false,
-      });
+  
+      // Set spinner to false once all operations are done
+      this.setState({ showSpinner: false });
     } catch (err) {
-      console.error("Error during edit or create:", err); // handle the error
+      console.error("Error during edit or create:", err); // Handle the error
+      this.setState({ showSpinner: false }); // Ensure spinner stops even if there's an error
     }
   }
 
@@ -649,7 +652,7 @@ class AddInventory extends Component {
   //       console.error(err); // handle the error
   //     }
   //   }
-  async postStockHdrDetails(data, type) {
+  async postStockHdr(data, type) {
     const { stockHdrsDetails, cartData } = this.state;
     // let data = [...cartData];
     console.log(data, "data stock h det post");
@@ -669,9 +672,10 @@ class AddInventory extends Component {
       }
     } else {
       try {
+        let docNo = data.docNo;
         //   const  res = await Apiservice().patchAPI(`StkMovdocHdrs/update?[where][docNo]=${data.docNo}`, data);
-        const res = await Apiservice().patchAPI(
-          `StkMovdocHdrs/${data.poId}`,
+        const res = await Apiservice().postAPI(
+          `StkMovdocHdrs/update?[where][docNo]=${docNo}`,
           data
         );
 
@@ -689,10 +693,9 @@ class AddInventory extends Component {
     }
   }
 
-  print(){
-    console.log(this.state.stockList,'stlis')
-    console.log(this.state.slicedDetails,'sliced')
-
+  print() {
+    console.log(this.state.stockList, "stlis");
+    console.log(this.state.slicedDetails, "sliced");
   }
   async onSubmit(e, type) {
     e.preventDefault();
@@ -727,7 +730,7 @@ class AddInventory extends Component {
         baddr2: supplierInfo.line2,
         baddr3: supplierInfo.line3,
         bpostcode: supplierInfo.pcode,
-  
+
         daddr1: supplierInfo.sline1,
         daddr2: supplierInfo.sline2,
         daddr3: supplierInfo.sline3,
@@ -740,27 +743,24 @@ class AddInventory extends Component {
 
       if (
         type === "save" &&
-        !this.props?.docNo &&
+        !this.props?.docData?.docNo &&
         this.state.stockHdrs?.docStatus === 0
       ) {
-       await this.postStockHdrDetails(data, "create");
+        await this.postStockHdr(data, "create");
         await this.postStockDetails();
-
-
-      } else if (type === "save" && this.props.docNo) {
-        this.postStockHdrDetails(data, "update");
+      } else if (type === "save" && this.props.docData?.docNo) {
+        this.postStockHdr(data, "update");
         this.postStockDetails();
-      } else if (type === "post" && this.props.docNo) {
+      } else if (type === "post" && this.props.docData?.docNo) {
         data = {
           ...data,
           docStatus: 7,
         };
-        this.postStockHdrDetails(data, "updateStatus");
+        this.postStockHdr(data, "updateStatus");
         this.postStockDetails();
       }
-    //   this.router.navigate('/list');
-      this.props.routeto()
-
+      //   this.router.navigate('/list');
+      this.props.routeto();
     } else {
       console.log("Form is invalid, fix the errors and resubmit.");
     }
@@ -853,7 +853,7 @@ class AddInventory extends Component {
   };
 
   updatePagination = (newPagination) => {
-    console.log(newPagination,'search')
+    console.log(newPagination, "search");
     this.setState((prevState) => ({
       supplyPagination: {
         ...prevState.supplyPagination,
@@ -870,15 +870,36 @@ class AddInventory extends Component {
 
   onSave = () => {
     const { cartData, editData, editIndex } = this.state;
+
     let updatedCart = [...cartData];
-    let updated = { ...updatedCart[editIndex], ...editData };
+    let updated = {
+      ...updatedCart[editIndex],
+      ...editData,
+      docAmt: editData.docQty * editData.docPrice,
+    };
     updatedCart[editIndex] = updated;
     console.log(updatedCart[editIndex], "obj");
     console.log(updatedCart, "updated");
-
     this.setState({
       cartData: updatedCart,
     });
+    const Amount = updatedCart.reduce((acc, item) => {
+        console.log(item.Qty, item);
+        return acc + item.docQty * item.docPrice;
+      }, 0);
+  
+      console.log(Amount, "amountttoal");
+      const Quantity = updatedCart.reduce((acc, item) => {
+        return acc + item.docQty; // Ensure Qty is a number or 0 if undefined
+      }, 0);
+      console.log(Quantity, "Quantity");
+  
+      this.setState({
+        totalCart: {
+          amt: Amount,
+          qty: Quantity,
+        },
+      });
     // this.setState({showModal:false})
     this.handleCloseModal();
 
@@ -897,6 +918,7 @@ class AddInventory extends Component {
         docQty: item?.docQty ?? "", // Fallback to empty string if Qty is null or undefined
         docPrice: item?.docPrice ?? "", // Fallback to empty string if Price is null or undefined
       },
+
       editIndex: i, // Set the index in the same state update
     });
   };
@@ -948,7 +970,7 @@ class AddInventory extends Component {
       //   ...item,
       id: i + 1,
       docAmt: amount,
-      docNo: controlDatas.docNo,
+      docNo: this.props?.docData?.docNo?? controlDatas?.docNo,
       movCode: "GRN",
       movType: "GRN",
       docLineno: null,
@@ -1038,6 +1060,9 @@ class AddInventory extends Component {
   };
 
   render() {
+    console.log(this.props);
+
+    const { docData } = this.props;
     const {
       activeTab,
       stockHdrs,
@@ -1400,7 +1425,7 @@ class AddInventory extends Component {
 
           {activeTab === "detail" ? (
             <div className="tab-detail">
-              {!this.props.docNo && (
+              {docData?.docStatus !== 7 && (
                 <div className="detail-filter">
                   <div className="section-div ">
                     <input
@@ -1437,7 +1462,7 @@ class AddInventory extends Component {
                       placeholder="Search by item Code "
                       className="input-field a"
                       type="string"
-                        value={supplyPagination.name}
+                      value={supplyPagination.name}
                       onChange={(e) => this.updateSearch(e?.target.value)}
                       //   onChange={(e) => this.updateSearch(e, "docRemk1")}
                     ></input>
@@ -1446,7 +1471,7 @@ class AddInventory extends Component {
               )}
 
               <div className="table-detail">
-                {!this.props.docNo ? (
+                {docData?.docStatus !== 7 ? (
                   <Table
                     headerDetails={headerDetails}
                     pagination={supplyPagination}
@@ -1795,14 +1820,13 @@ class AddInventory extends Component {
               this.onSubmit(e, "post");
             }}
             className={`btn post ${
-              stockHdrs.docStatus === 7 || !this.props.docNo ? "disabled" : ""
+              stockHdrs.docStatus === 7 || !this.props?.docData?.docNo ? "disabled" : ""
             } `}
           >
             Post
           </div>
           {/* <div onClick={() => this.props.routeto()} className="btn list"> */}
           <div onClick={() => this.print()} className="btn list">
-
             List
           </div>
         </div>

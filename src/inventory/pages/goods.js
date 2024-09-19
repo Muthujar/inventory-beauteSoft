@@ -20,7 +20,10 @@ export default class Goods extends Component {
         docStatus: "0",
         movCode: "GRN",
       },
-      propDocNo: null,
+      propDocdata: {
+        docNo:'',
+        docStatus:''
+      },
       pagination: {
         limit: 10,
         page: 1,
@@ -69,18 +72,28 @@ export default class Goods extends Component {
     }
 
     // Check if the filter's docStatus has changed
-    if (prevState.filter.docStatus !== filter.docStatus) {
-      this.setState(
-        {
-          goodsData: [],
-          slicedData: [],
-          pagination: { ...pagination, page: 1 },
-        },
-        () => {
-          this.getNoteTable();
-        }
-      );
+    if (prevState.activeFilter !== this.state.activeFilter) {
+
+        if (this.state.activeFilter!=='all'){
+
+        this.setState(
+          (prevState) => ({
+            goodsData: [],
+            slicedData: [],
+            pagination: {
+              ...prevState.pagination,
+              page: 1
+            },
+            filter: {
+              ...prevState.filter,
+            //   docStatus: this.state.filter.docStatus === 'all' ? '' : this.state.filter.docStatus
+            }
+          }),
+          this.getNoteTable // callback to trigger getNoteTable after state update
+        );
+      }
     }
+
   };
 
   updatePagination = (newPagination) => {
@@ -191,12 +204,19 @@ export default class Goods extends Component {
       .catch((err) => {});
   };
 
-  handleFilter = (status, data) => {
-    const value = status === "Open" ? 0 : status === "Posted" ? 7 : "";
+  handleFilter = (status, index) => {
+
+    // let item=this.state.slicedData[index]
+    console.log(status,'passitem')
+    const value = status === "Open" ? 0 : status === "Posted" ? 7 : null;
 
     this.setState((prevState) => ({
       activeFilter: status,
-      propDocNo: data,
+    //   propDocdata: {
+    //     docNo:item?.docNo??null,
+    //     docStatus:item?.docStatus?? null
+        
+    //   },
       pagination: {
         ...prevState.pagination,
         name: "",
@@ -209,6 +229,30 @@ export default class Goods extends Component {
       },
     }));
   };
+
+  handleDetails=(item,i)=>{
+
+    this.setState((prevState) => ({
+        activeFilter: 'New',
+        propDocdata: {
+          docNo:item?.docNo??null,
+          docStatus:item?.docStatus?? null
+          
+        },
+        // pagination: {
+        //   ...prevState.pagination,
+        //   name: "",
+        //   page: 1,
+        // },
+        // showSpinner: true,
+        // filter: {
+        //   ...prevState.filter,
+        //   docStatus: value,
+        // },
+      }));
+
+
+  }
 
   routeto = () => {
     this.setState({
@@ -348,7 +392,7 @@ export default class Goods extends Component {
         {activeFilter === "New" ? (
           <AddInventory
             routeto={this.routeto}
-            docNo={this.state.propDocNo ?? null}
+            docData={this.state.propDocdata?.docNo ?this.state.propDocdata: null}
           />
         ) : (
             <div
@@ -378,7 +422,7 @@ export default class Goods extends Component {
                   return (
                     <tr>
                       <td
-                        onClick={() => this.handleFilter("New", item.docNo)}
+                        onClick={() => this.handleDetails(item, i)}
                         className="cursor-pointer"
                       >
                         {item.docNo}
