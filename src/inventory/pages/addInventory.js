@@ -6,11 +6,11 @@ import Apiservice from "../constants/apiservice";
 import { queryParamsGenerate, stockHdrs } from "../utils";
 import withRouter from "../components/withRouter";
 import moment from "moment";
+import Toast from "../components/toast";
 
 class AddInventory extends Component {
   constructor(props) {
     super(props);
-
     this.state = {
       slicedDetails: [],
       stockHdrs: {
@@ -79,6 +79,8 @@ class AddInventory extends Component {
       errors: {},
       showErrorToast: false,
       errorMessage: "",
+      showToast: false,
+      message: "", // holds the message for the toast
     };
   }
   async componentDidMount() {
@@ -679,7 +681,6 @@ class AddInventory extends Component {
           data
         );
 
-        console.log(res, "patch");
 
         this.setState({
           showSpinner: false,
@@ -741,6 +742,8 @@ class AddInventory extends Component {
       };
       if (stockHdrs?.poId) data.poId = stockHdrs?.poId;
 
+      let message
+
       if (
         type === "save" &&
         !this.props?.docData?.docNo &&
@@ -748,9 +751,13 @@ class AddInventory extends Component {
       ) {
         await this.postStockHdr(data, "create");
         await this.postStockDetails();
+        message='Note created successfully'
+
       } else if (type === "save" && this.props.docData?.docNo) {
-        this.postStockHdr(data, "update");
-        this.postStockDetails();
+        await this.postStockHdr(data, "update");
+        await this.postStockDetails();
+        message='Note updated successfully'
+
       } else if (type === "post" && this.props.docData?.docNo) {
         data = {
           ...data,
@@ -758,9 +765,13 @@ class AddInventory extends Component {
         };
         this.postStockHdr(data, "updateStatus");
         this.postStockDetails();
+        message='Note posted successfully'
+
+        // this.showToastMessage('Note posted successfully')
+
       }
       //   this.router.navigate('/list');
-      this.props.routeto();
+      this.props.routeto(message);
     } else {
       console.log("Form is invalid, fix the errors and resubmit.");
     }
@@ -1059,6 +1070,10 @@ class AddInventory extends Component {
     console.log(cartData, "cartdata");
   };
 
+  showToastMessage = (message) => {
+    this.toastRef?.current?.setToastMessage(message); // Pass message to Toast component
+  };
+
   render() {
     console.log(this.props);
 
@@ -1080,6 +1095,7 @@ class AddInventory extends Component {
       showErrorToast,
       errorMessage,
       totalCart,
+      showToast, message 
     } = this.state;
     const headerDetails = [
       {
@@ -1805,6 +1821,9 @@ class AddInventory extends Component {
             </div>
           </div>
         </div>
+
+        <Toast ref={this.toastRef} />
+
 
         <div className="onSave-div">
           <div

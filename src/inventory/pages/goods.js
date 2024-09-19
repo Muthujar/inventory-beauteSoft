@@ -5,10 +5,13 @@ import Apiservice from "../constants/apiservice";
 import { queryParamsGenerate } from "../utils";
 import printer from "../assets/icons/print-solid.svg";
 import moment from "moment";
+import Toast from "../components/toast";
 
 export default class Goods extends Component {
   constructor(props) {
     super(props);
+    this.toastRef = React.createRef(); // Reference to Toast component
+
     this.state = {
       activeFilter: "Open",
       showSpinner: false,
@@ -31,6 +34,8 @@ export default class Goods extends Component {
         name: "",
       },
       searchValue: "",
+      showSuccessToast: false,
+      message: "",
     };
   }
 
@@ -38,6 +43,7 @@ export default class Goods extends Component {
     this.setState({ showSpinner: true });
     const query = queryParamsGenerate(this.state.filter);
     console.log(query);
+    console.log(this.toastRef,'tio')
 
     this.getNoteTable();
   }
@@ -212,11 +218,11 @@ export default class Goods extends Component {
 
     this.setState((prevState) => ({
       activeFilter: status,
-    //   propDocdata: {
-    //     docNo:item?.docNo??null,
-    //     docStatus:item?.docStatus?? null
+      propDocdata: {
+        docNo:null,
+        docStatus:null
         
-    //   },
+      },
       pagination: {
         ...prevState.pagination,
         name: "",
@@ -237,7 +243,6 @@ export default class Goods extends Component {
         propDocdata: {
           docNo:item?.docNo??null,
           docStatus:item?.docStatus?? null
-          
         },
         // pagination: {
         //   ...prevState.pagination,
@@ -254,15 +259,38 @@ export default class Goods extends Component {
 
   }
 
-  routeto = () => {
+  routeto = (message) => {
     this.setState({
       activeFilter: "Open",
       filter: {
         ...this.state.filter,
         docStatus: 0,
+        propDocdata: {
+            docNo:null,
+            docStatus: null
+          },
       },
     });
+    if (message)this.showToastMessage(message)
   };
+
+  showToastMessage = (message) => {
+
+    console.log(message,'mes')
+    this.setState({
+        showSuccessToast: true,
+        message: message,
+      });
+      setTimeout(() => {
+        this.setState({ showSuccessToast: false });
+      }, 2000);
+
+    // if (this.toastRef.current) {
+    //     this.toastRef.current.setToastMessage(message);
+
+    //   }  
+    };
+
 
   handleSort = (sortkey, order) => {
     console.log(sortkey);
@@ -305,6 +333,8 @@ export default class Goods extends Component {
       changePage,
       slicedData,
       orderBy,
+      showSuccessToast,
+      message
     } = this.state;
     const filters = ["Open", "Posted", "All", "New"];
     const headerDetails = [
@@ -407,6 +437,8 @@ export default class Goods extends Component {
               orderBy={orderBy}
             //   updateSearch={this.updateSearch}
             >
+                  <Toast ref={this.toastRef} />
+
               {showSpinner ? (
                 <tr>
                   <td colSpan={7}>
@@ -457,7 +489,28 @@ export default class Goods extends Component {
             </Table>
             {/* <div className="title">{pagination.page}</div> */}
           </div>
+
         )}
+                          {/* <Toast ref={this.toastRef} /> */}
+                          {showSuccessToast && (
+  <div
+    className="toast show align-items-center text-bg-success border-0"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="true"
+  >
+    <div className="d-flex">
+      <div className="toast-body">{message}</div>
+      <button
+        type="button"
+        className="btn-close btn-close-white me-2 m-auto"
+        aria-label="Close"
+        onClick={() => this.setState({ showSuccessToast: false })}
+      ></button>
+    </div>
+  </div>
+)}
+
       </div>
     );
   }
