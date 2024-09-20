@@ -46,7 +46,7 @@ export default class LimitSearch extends Component {
 
               </div>
               <div className='search-table'>
-              <input placeholder='Search by'
+              <input placeholder='Search by Invoice num/Invoice date/Ref num/Suppl... '
                className='input-search'
                value={search}
                 onChange={(e)=>this.changeLimitandSearch('name',e.target.value)}></input>

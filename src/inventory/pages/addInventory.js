@@ -92,13 +92,6 @@ class AddInventory extends Component {
         movCode: "GRN",
         docNo: docData?.docNo,
       };
-      //   this.setState((prevState) => ({
-      //     filter: {
-      //       ...prevState.filter,
-      //       docNo: this.props.docNo,
-      //       movCode:''
-      //     },
-      //   }));
       await this.getStockHdr(filter);
       if (docData?.docStatus !== 7) await this.getStockDetails();
 
@@ -186,12 +179,6 @@ class AddInventory extends Component {
   }
 
   routeList() {
-    console.log(this.state.stockHdrs, "stockHdrs");
-    console.log(this.state.cartData, "cartdata");
-    console.log(this.state.totalCart, "totalCart");
-    console.log(this.state.supplyPagination, "pagina");
-
-    // this.props.history.push('/goods-receive-note');
     this.props.navigate("/goods-receive-note?list");
   }
 
@@ -207,10 +194,7 @@ class AddInventory extends Component {
       const postDate = new Date(response[0]?.postDate)
         .toISOString()
         .split("T")[0];
-      // const docAmt=response[0].docAmt.toFixed(2)
-      // const docQty=response[0]?.docQty
       const data = response[0];
-
       const docAmt = data?.docAmt;
       const docQty = data?.docQty;
 
@@ -232,11 +216,10 @@ class AddInventory extends Component {
 
       //   this.pageLimit();
     } catch (err) {
-      console.error(err); // handle error appropriately
+      console.error(err); 
     }
   };
 
-  // Convert getStockHdrDetails to async
   getStockHdrDetails = async (filter) => {
     try {
       const response = await Apiservice().getAPI(
@@ -250,7 +233,7 @@ class AddInventory extends Component {
 
       //   this.pageLimit();
     } catch (err) {
-      console.error(err); // handle error appropriately
+      console.error(err); 
     }
   };
 
@@ -272,23 +255,17 @@ class AddInventory extends Component {
         supplyOptions: supplyOption,
         stockHdrs: {
           ...prevState.stockHdrs,
-          supplyNo: supplycode ? supplycode : supplyOption[0]?.value || null, // Set default to first option's value if it exists
+          supplyNo: supplycode ? supplycode : supplyOption[0]?.value || null,
         },
-        // supplyPagination: {
-        //   ...prevState.supplyPagination,
-        //   total: prevState.stockHdrsDetails.length,
-        // },
         showSpinner: false,
       }));
     } catch (err) {
-      // Handle the error
       console.error("Error fetching supply list:", err);
     }
   }
 
   async getDocNo() {
     try {
-      // Await the API call
       const codeDesc = "Goods Receive Note";
       const siteCode = "MCHQ";
       const res = await Apiservice().getAPI(
@@ -297,9 +274,6 @@ class AddInventory extends Component {
       console.log(res);
       if (!res) return;
       const docNo = res[0].controlPrefix + res[0].siteCode + res[0].controlNo;
-      //   const docNo = res[0].controlPrefix + res[0].siteCode + 110050
-
-      console.log(docNo, "docno");
       this.setState((prevState) => ({
         stockHdrs: {
           ...prevState.stockHdrs,
@@ -314,7 +288,6 @@ class AddInventory extends Component {
       }));
       //   this.pageLimit();
     } catch (err) {
-      // Handle the error
       console.error("Error fetching supply details:", err);
     }
   }
@@ -330,26 +303,15 @@ class AddInventory extends Component {
       const controlNosUpdate = {
         controldescription: "Goods Receive Note",
         sitecode: "MCHQ",
-        controlnumber: newControlNo, // Set the incremented control number
+        controlnumber: newControlNo, 
       };
 
       const api = "ControlNos/updatecontrol";
       const response = await Apiservice().postAPI(api, controlNosUpdate);
 
-      if (!response) return; // Handle the case where the response is empty or null
+      if (!response) return; 
 
-      console.log("Control number updated successfully", response);
-
-      // this.setState((prevState) => ({
-      //   stockHdrs: {
-      //     ...prevState.stockHdrs,
-      //     docNo: newControlNo,
-      //   },
-      //   showSpinner: false,
-      // }));
     } catch (err) {
-      // Handle any errors during the API call
-      console.error("Error updating control number:", err);
     }
   }
 
@@ -400,45 +362,7 @@ class AddInventory extends Component {
       slicedDetails: data,
     });
   };
-  //   handleSearch = (value) => {
-  //     const filteredItems = this?.state?.stockList?.filter((items) => {
-  //       console.log(items);
-  //       return (
-  //         items?.stockCode
-  //           ?.toString()
-  //           .toLocaleLowerCase()
-  //           .includes(value.toLowerCase()) ||
-  //         items?.stockName
-  //           ?.toString()
-  //           .toLocaleLowerCase()
-  //           .includes(value.toLowerCase()) ||
-  //         items?.itemUom
-  //           ?.toString()
-  //           .toLocaleLowerCase()
-  //           .includes(value.toLowerCase()) ||
-  //         items?.linkCode
-  //           ?.toString()
-  //           .toLocaleLowerCase()
-  //           .includes(value.toLowerCase()) ||
-  //         items?.brandCode
-  //           ?.toString()
-  //           .toLocaleLowerCase()
-  //           .includes(value.toLowerCase()) ||
-  //         items?.range
-  //           ?.toString()
-  //           .toLocaleLowerCase()
-  //           .includes(value.toLowerCase()) ||
-  //         items?.quantity
-  //           ?.toString()
-  //           .toLocaleLowerCase()
-  //           .includes(value.toLowerCase())
 
-  //       );
-  //     });
-  //     console.log(filteredItems, "filarr");
-  //     this.setFilteredData(filteredItems);
-  //     this.pageLimit();
-  //   };
 
   handleSearch = (value) => {
     let debounceTimer;
@@ -486,20 +410,16 @@ class AddInventory extends Component {
 
           console.log(filteredItems, "filteredItems");
 
-          // Assuming you update the pagination based on filtered items here as well
           let pagina = {
             total: filteredItems.length,
           };
           this.updatePagination(pagina);
 
-          //   this.setFilteredData(filteredItems); // Update the filtered data
-          //   this.pageLimit(); // Call page limit logic
-
           resolve(filteredItems);
         } catch (error) {
           reject(error);
         }
-      }, 500); // Debounce delay set to 500ms
+      }, 500); 
     });
   };
 
@@ -538,8 +458,6 @@ class AddInventory extends Component {
     const { stockHdrs, supplierInfo, cartData, totalCart } = this.state;
     let errors = {};
     let formIsValid = true;
-
-    // stockHdrs validations
     if (!stockHdrs.docNo) {
       formIsValid = false;
       errors["Docno"] = "Document number is required";
@@ -565,27 +483,6 @@ class AddInventory extends Component {
       errors["postDate"] = "Post date is required";
     }
 
-    // SupplierInfo validations
-    // if (!supplierInfo.Attn) {
-    //   formIsValid = false;
-    //   errors["Attn"] = "Attention field is required";
-    // }
-
-    // if (!supplierInfo.line1) {
-    //   formIsValid = false;
-    //   errors["line1"] = "Address Line 1 is required";
-    // }
-
-    // if (!supplierInfo.pcode) {
-    //   formIsValid = false;
-    //   errors["pcode"] = "Postal code is required";
-    // }
-
-    // if (!supplierInfo.spcode) {
-    //   formIsValid = false;
-    //   errors["spcode"] = "Supplier postal code is required";
-    // }
-
     if (cartData.length === 0) {
       formIsValid = false;
       errors["cart"] = "cart shouldn't be empty";
@@ -594,7 +491,6 @@ class AddInventory extends Component {
     this.setState({ errors });
     console.log(formIsValid, this.state.errors);
 
-    // Show toast if form is invalid
     if (!formIsValid) {
       console.log(this.state.errors);
       this.setState({
@@ -607,53 +503,31 @@ class AddInventory extends Component {
   };
 
   async postStockDetails() {
-    const { cartData } = this.state; // Assuming cartData contains the data to be updated
+    const { cartData } = this.state; 
     console.log(cartData, "data for editing");
   
     this.setState({ showSpinner: true });
   
     try {
-      // Iterate over each item in cartData
       for (let item of cartData) {
         let res;
   
         if (item.docId) {
-          // PATCH request for existing items
           res = await Apiservice().patchAPI(`StkMovdocDtls/${item.docId}`, item);
           console.log(res, `Updated item with docId: ${item.docId}`);
         } else {
-          // POST request for new items
           res = await Apiservice().postAPI("StkMovdocDtls", item);
           console.log(res, "Created new item");
         }
       }
   
-      // Set spinner to false once all operations are done
       this.setState({ showSpinner: false });
     } catch (err) {
-      console.error("Error during edit or create:", err); // Handle the error
-      this.setState({ showSpinner: false }); // Ensure spinner stops even if there's an error
+      console.error("Error during edit or create:", err); 
+      this.setState({ showSpinner: false }); 
     }
   }
 
-  //   async postStockDetails() {
-  //     const { stockHdrsDetails, cartData } = this.state;
-  //     let data = [...cartData];
-  //     console.log(data, "data stock h det post");
-  //     try {
-  //       const res = await Apiservice().postAPI("StkMovdocDtls", data);
-  //       console.log(res, "post");
-
-  //       this.setState({
-  //         showSpinner: false,
-  //       });
-
-  //       this.addNewControlNumber();
-  //       this.pageLimit();
-  //     } catch (err) {
-  //       console.error(err); // handle the error
-  //     }
-  //   }
   async postStockHdr(data, type) {
     const { stockHdrsDetails, cartData } = this.state;
     // let data = [...cartData];
@@ -670,12 +544,11 @@ class AddInventory extends Component {
         this.addNewControlNumber();
         // this.pageLimit();
       } catch (err) {
-        console.error(err); // handle the error
+        console.error(err); 
       }
     } else {
       try {
         let docNo = data.docNo;
-        //   const  res = await Apiservice().patchAPI(`StkMovdocHdrs/update?[where][docNo]=${data.docNo}`, data);
         const res = await Apiservice().postAPI(
           `StkMovdocHdrs/update?[where][docNo]=${docNo}`,
           data
@@ -685,11 +558,8 @@ class AddInventory extends Component {
         this.setState({
           showSpinner: false,
         });
-
-        // this.addNewControlNumber();
-        // this.pageLimit();
       } catch (err) {
-        console.error(err); // handle the error
+        console.error(err);
       }
     }
   }
@@ -766,11 +636,7 @@ class AddInventory extends Component {
         this.postStockHdr(data, "updateStatus");
         this.postStockDetails();
         message='Note posted successfully'
-
-        // this.showToastMessage('Note posted successfully')
-
       }
-      //   this.router.navigate('/list');
       this.props.routeto(message);
     } else {
       console.log("Form is invalid, fix the errors and resubmit.");
@@ -785,7 +651,7 @@ class AddInventory extends Component {
 
     console.log(Amount, "amountttoal");
     const Quantity = this.state.cartData.reduce((acc, item) => {
-      return acc + item.docQty; // Ensure Qty is a number or 0 if undefined
+      return acc + item.docQty; 
     }, 0);
     console.log(Quantity, "Quantity");
 
@@ -810,25 +676,9 @@ class AddInventory extends Component {
   handlecalc = (e, index, type) => {
     const { value } = e.target;
 
-    console.log(value, "value");
-
-    // Convert to number if type is "Price", otherwise keep as is
     const newValue = Number(value);
-    console.log(newValue, "newvalue");
-    // Debugging logs
-    console.log("Value before update:", value);
-    console.log("New value to set:", newValue);
 
-    // Update the stockList array immutably
     const updatedStockList = structuredClone(this.state.slicedDetails);
-
-    // const updatedStockList = this.state.stockList.map((item, i) => {
-    //   if (i === index) {
-    //     console.log("Updating item at index:", i);
-    //     return { ...item, [type]: newValue };
-    //   }
-    //   return item;
-    // });
 
     console.log(updatedStockList[index], "updated");
     updatedStockList[index] = {
@@ -836,7 +686,6 @@ class AddInventory extends Component {
       [type]: newValue,
     };
 
-    console.log("Updated stockList:", updatedStockList);
 
     this.setState({ slicedDetails: updatedStockList }, () => {
       console.log("State after setState:", this.state.slicedDetails);
@@ -901,7 +750,7 @@ class AddInventory extends Component {
   
       console.log(Amount, "amountttoal");
       const Quantity = updatedCart.reduce((acc, item) => {
-        return acc + item.docQty; // Ensure Qty is a number or 0 if undefined
+        return acc + item.docQty; 
       }, 0);
       console.log(Quantity, "Quantity");
   
@@ -911,13 +760,7 @@ class AddInventory extends Component {
           qty: Quantity,
         },
       });
-    // this.setState({showModal:false})
     this.handleCloseModal();
-
-    // console.log(cartData,'ca')
-    // const modalElement = document.getElementById('exampleModal');
-    // const modal = Modal.getInstance(modalElement);
-    // modal?.hide();
   };
 
   editPopup = (item, i) => {
@@ -925,12 +768,12 @@ class AddInventory extends Component {
     this.setState({ showModal: true });
     this.setState({
       editData: {
-        itemRemark: item?.Remarks ?? "", // Fallback to empty string if Remarks is null or undefined
-        docQty: item?.docQty ?? "", // Fallback to empty string if Qty is null or undefined
-        docPrice: item?.docPrice ?? "", // Fallback to empty string if Price is null or undefined
+        itemRemark: item?.Remarks ?? "", 
+        docQty: item?.docQty ?? "", 
+        docPrice: item?.docPrice ?? "", 
       },
 
-      editIndex: i, // Set the index in the same state update
+      editIndex: i, 
     });
   };
 
@@ -938,15 +781,6 @@ class AddInventory extends Component {
     let value = e.target.value;
 
     console.log(value);
-    //     const { cartData, editIndex } = this.state;
-    // let updatedCartData=[...cartData]
-
-    //     let editData = {...updatedCartData[editIndex]}
-    //     editData[type]=value
-    //     updatedCartData[editIndex] = editData;
-    //     this.setState({
-    //         cartData:updatedCartData
-    //     })
 
     this.setState((prevState) => ({
       editData: {
@@ -965,20 +799,13 @@ class AddInventory extends Component {
 
   addToCart = (i) => {
     const { stockList, controlDatas, cartData, slicedDetails } = this.state;
-    console.log(stockList[i], "stocklist");
-    console.log(slicedDetails[i], "stocklist");
-
-    console.log(cartData, "cartData");
 
     let item = slicedDetails[i];
     if (item.Qty === 0) return window.alert("quantity should not be empty");
-    console.log(cartData, "cartdata");
-    console.log(item, "item");
 
     const amount = item.Qty * item.Price;
 
     let idCart = {
-      //   ...item,
       id: i + 1,
       docAmt: amount,
       docNo: this.props?.docData?.docNo?? controlDatas?.docNo,
@@ -1000,7 +827,6 @@ class AddInventory extends Component {
       docMdisc: "",
       docPdisc: 0,
       docDisc: 0,
-      //   docAmt: 0,
       recQty1: 0,
       recQty2: 0,
       recQty3: 0,
@@ -1046,32 +872,23 @@ class AddInventory extends Component {
 
     console.log(itemExists);
     if (!itemExists) {
-      console.log(itemExists);
 
       let cart = {
         ...idCart,
         // id: i + 1,
       };
-      console.log(cart);
 
       this.setState((prevState) => ({
         cartData: [...prevState.cartData, cart],
       }));
     } else {
-      // let cart = {
-      //     ...item,
-      //     id: i + 1,
-      //   };
-      //   console.log(cart);
-      //   this.setState((prevState) => ({
-      //     cartData: [...prevState.cartData, cart],
-      //   }));
+
     }
     console.log(cartData, "cartdata");
   };
 
   showToastMessage = (message) => {
-    this.toastRef?.current?.setToastMessage(message); // Pass message to Toast component
+    this.toastRef?.current?.setToastMessage(message); 
   };
 
   render() {
@@ -1084,8 +901,6 @@ class AddInventory extends Component {
       showSpinner,
       cartData,
       supplyPagination,
-      stockHdrsDetails,
-      totalCartAmount,
       editIndex,
       editData,
       showModal,
@@ -1095,7 +910,6 @@ class AddInventory extends Component {
       showErrorToast,
       errorMessage,
       totalCart,
-      showToast, message 
     } = this.state;
     const headerDetails = [
       {
@@ -1308,13 +1122,6 @@ class AddInventory extends Component {
                 options={statusOption}
                 onChange={(e) => this.optionClick(e, "docStatus")}
               />
-
-              {/* <input
-                value={stockHdrs.docStatus}
-                className="input-field"
-                type="string"
-                disabled
-              ></input> */}
             </div>
           </div>
           <div className="row-in">
@@ -1388,7 +1195,6 @@ class AddInventory extends Component {
                 type="string"
                 onChange={(e) => this.handleDateChange(e, "storeNo")}
               ></input>
-              {/* <Select className="select-field" options={options}/> */}
             </div>
           </div>
           <div className="row-in">
@@ -1396,9 +1202,7 @@ class AddInventory extends Component {
               <div className="inText">
                 Created By <span className="red-mand">*</span>
               </div>
-              {/* <input className="input-field"  type="string"></input> */}
               <Select
-                // value={stockHdrs.createUser}
                 className="select-field"
                 options={userOption}
                 value={userOption.find(
@@ -1417,10 +1221,7 @@ class AddInventory extends Component {
                 onChange={(e) => this.handleDateChange(e, "docRemk1")}
               ></input>
             </div>
-            {/* <div>
-                        <div>Status*</div>
-                        <input type='string'></input>
-                    </div> */}
+
           </div>
         </div>
         <div className="box-detail">
@@ -1475,12 +1276,11 @@ class AddInventory extends Component {
                   </div>
                   <div className="section-div ml-8">
                     <input
-                      placeholder="Search by item Code "
+                      placeholder="Search by item code/item desc/... "
                       className="input-field a"
                       type="string"
                       value={supplyPagination.name}
                       onChange={(e) => this.updateSearch(e?.target.value)}
-                      //   onChange={(e) => this.updateSearch(e, "docRemk1")}
                     ></input>
                   </div>
                 </div>
@@ -1492,8 +1292,6 @@ class AddInventory extends Component {
                     headerDetails={headerDetails}
                     pagination={supplyPagination}
                     updatePagination={this.updatePagination}
-                    // updateSearch={this.updateSearch}
-                    // setFilteredData={this.setFilteredData}
                   >
                     {showSpinner ? (
                       <tr>
@@ -1574,7 +1372,6 @@ class AddInventory extends Component {
                             <td>{item?.Remarks ?? ""}</td>
                             <td
                               className="cursor-pointer"
-                              //   onClick={() => this.onEditCart(item, i)}
                             >
                               {
                                 <i
@@ -1736,19 +1533,13 @@ class AddInventory extends Component {
         )}
 
         <div
-          className={`modal fade show`} // Apply 'show' and 'd-block' classes conditionally
+          className={`modal fade show`} 
           id="exampleModal"
           tabindex="-1"
           role="dialog"
           aria-labelledby="exampleModalLabel"
           aria-hidden="true"
-          // className="modal show d-block"
-          //   tabindex="1"
 
-          // role="dialog"
-          // aria-labelledby="exampleModalLabel"
-          // aria-hidden="false"
-          /* Set to false to ensure it's always shown */
         >
           <div
             className="modal-dialog modal-dialog-centered show"
@@ -1844,8 +1635,8 @@ class AddInventory extends Component {
           >
             Post
           </div>
-          {/* <div onClick={() => this.props.routeto()} className="btn list"> */}
-          <div onClick={() => this.print()} className="btn list">
+          <div onClick={() => this.props.routeto()} className="btn list">
+          {/* <div onClick={() => this.print()} className="btn list"> */}
             List
           </div>
         </div>
@@ -1853,4 +1644,4 @@ class AddInventory extends Component {
     );
   }
 }
-export default withRouter(AddInventory); // Wrap your class component with withRouter
+export default withRouter(AddInventory); 

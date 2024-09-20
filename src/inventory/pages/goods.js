@@ -10,7 +10,6 @@ import Toast from "../components/toast";
 export default class Goods extends Component {
   constructor(props) {
     super(props);
-    this.toastRef = React.createRef(); // Reference to Toast component
 
     this.state = {
       activeFilter: "Open",
@@ -77,7 +76,6 @@ export default class Goods extends Component {
       }
     }
 
-    // Check if the filter's docStatus has changed
     if (prevState.activeFilter !== this.state.activeFilter) {
 
         if (this.state.activeFilter!=='all'){
@@ -92,10 +90,9 @@ export default class Goods extends Component {
             },
             filter: {
               ...prevState.filter,
-            //   docStatus: this.state.filter.docStatus === 'all' ? '' : this.state.filter.docStatus
             }
           }),
-          this.getNoteTable // callback to trigger getNoteTable after state update
+          this.getNoteTable 
         );
       }
     }
@@ -111,25 +108,7 @@ export default class Goods extends Component {
     }));
   };
 
-  //   handleSearch = async (value) => {
-  //     console.log(value, 'value');
-
-  //     const filteredItems = this?.state?.goodsData?.filter((items) => {
-  //       console.log(items);
-  //       return (
-  //         items?.docNo?.toLocaleLowerCase().includes(value.toLowerCase()) ||
-  //         moment(items?.docDate)?.format(`DD/MM/YYYY`).includes(value) ||
-  //         items.docRef1.toLocaleLowerCase().includes(value.toLocaleLowerCase()) ||
-  //         items.supplyNo
-  //           .toString()
-  //           .toLocaleLowerCase()
-  //           .includes(value.toLocaleLowerCase()) ||
-  //         items?.docAmt
-  //           ?.toString()
-  //           .toLocaleLowerCase()
-  //           ?.includes(value.toLocaleLowerCase())
-  //       );
-  //     });
+  
   handleSearch = (value) => {
     let debounceTimer;
     this.setState({ showSpinner: true });
@@ -211,8 +190,6 @@ export default class Goods extends Component {
   };
 
   handleFilter = (status, index) => {
-
-    // let item=this.state.slicedData[index]
     console.log(status,'passitem')
     const value = status === "Open" ? 0 : status === "Posted" ? 7 : null;
 
@@ -244,16 +221,6 @@ export default class Goods extends Component {
           docNo:item?.docNo??null,
           docStatus:item?.docStatus?? null
         },
-        // pagination: {
-        //   ...prevState.pagination,
-        //   name: "",
-        //   page: 1,
-        // },
-        // showSpinner: true,
-        // filter: {
-        //   ...prevState.filter,
-        //   docStatus: value,
-        // },
       }));
 
 
@@ -274,22 +241,19 @@ export default class Goods extends Component {
     if (message)this.showToastMessage(message)
   };
 
-  showToastMessage = (message) => {
+//   showToastMessage = (message) => {
 
-    console.log(message,'mes')
-    this.setState({
-        showSuccessToast: true,
-        message: message,
-      });
-      setTimeout(() => {
-        this.setState({ showSuccessToast: false });
-      }, 2000);
+//     console.log(message,'mes')
+//     this.setState({
+//         showSuccessToast: true,
+//         message: message,
+//       });
+//       setTimeout(() => {
+//         this.setState({ showSuccessToast: false });
+//       }, 2000);
 
-    // if (this.toastRef.current) {
-    //     this.toastRef.current.setToastMessage(message);
 
-    //   }  
-    };
+//     };
 
 
   handleSort = (sortkey, order) => {
@@ -316,12 +280,11 @@ export default class Goods extends Component {
   dateConvert = (value) => {
     const date = new Date(value);
 
-    const day = String(date.getDate()).padStart(2, "0"); // Get the day and pad with 0 if necessary
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Get the month and pad, months are zero-indexed
-    const year = date.getFullYear(); // Get the full year
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear(); 
 
-    return `${day}/${month}/${year}`; // Return the date in dd/mm/yyyy format
-    //    return new Date(date)
+    return `${day}/${month}/${year}`; 
   };
 
   render() {
@@ -412,10 +375,6 @@ export default class Goods extends Component {
                 {item}
               </div>
             ))}
-            {/* <div className="btn-filter">Posted</div>
-            <div className="btn-filter">All</div>
-
-            <div className="btn-filter">New</div> */}
           </div>
         </div>
 
@@ -432,12 +391,9 @@ export default class Goods extends Component {
               headerDetails={headerDetails}
               pagination={pagination}
               updatePagination={this.updatePagination}
-            //   setFilteredData={this.setFilteredData}
               tableData={goodsData}
               orderBy={orderBy}
-            //   updateSearch={this.updateSearch}
             >
-                  <Toast ref={this.toastRef} />
 
               {showSpinner ? (
                 <tr>
@@ -470,11 +426,6 @@ export default class Goods extends Component {
                           className="icon-print"
                           src={printer}
                         ></img>
-                        {/* <FontAwesomeIcon icon={fas.faHouse} />  */}
-                        {/* <i className=" fa-spin"></i> */}
-                        {/* <i className="fa-solid fa-print"></i>        */}
-                        {/* {item.DocNumber} */}
-                        {/* <i class="fa-solid fa-print"></i> */}
                       </td>
                     </tr>
                   );
@@ -487,11 +438,9 @@ export default class Goods extends Component {
                 </tr>
               )}
             </Table>
-            {/* <div className="title">{pagination.page}</div> */}
           </div>
 
         )}
-                          {/* <Toast ref={this.toastRef} /> */}
                           {showSuccessToast && (
   <div
     className="toast show align-items-center text-bg-success border-0"
