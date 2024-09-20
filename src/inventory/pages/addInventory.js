@@ -1201,7 +1201,7 @@ class AddInventory extends Component {
                   <input
                     value={stockHdrs.docTerm}
                     className="input-field"
-                    type="string"
+                    type="number"
                     onChange={(e) => this.handleDateChange(e, "docTerm")}
                   ></input>
                 </div>
