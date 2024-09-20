@@ -7,7 +7,10 @@ import { queryParamsGenerate, stockHdrs } from "../utils";
 import withRouter from "../components/withRouter";
 import moment from "moment";
 import Toast from "../components/toast";
-import ToastComponent, { showErrorToast, showSuccessToast } from "../components/toaster";
+import ToastComponent, {
+  showErrorToast,
+  showSuccessToast,
+} from "../components/toaster";
 
 class AddInventory extends Component {
   constructor(props) {
@@ -44,8 +47,8 @@ class AddInventory extends Component {
         total: null,
         name: "",
         hideLimit: true,
-        range:'',
-        brand:''
+        range: "",
+        brand: "",
       },
 
       cartData: [],
@@ -83,7 +86,8 @@ class AddInventory extends Component {
       showError: false,
       errorMessage: "",
       showToast: false,
-      message: "", // holds the message for the toast
+      message: "",
+      pageSpinner: false,
     };
   }
   async componentDidMount() {
@@ -102,6 +106,8 @@ class AddInventory extends Component {
       await this.getStockHdrDetails(filter);
       await this.getSupplyList(this.state.stockHdrs.supplyNo);
     } else {
+      this.setState({ pageSpinner: true });
+
       const today = new Date().toISOString().split("T")[0];
       this.setState((prevState) => ({
         stockHdrs: {
@@ -113,6 +119,7 @@ class AddInventory extends Component {
       await this.getDocNo();
       await this.getSupplyList();
       this.setState({ showSpinner: true });
+      this.setState({ pageSpinner: false });
 
       await this.getStockDetails();
     }
@@ -127,45 +134,37 @@ class AddInventory extends Component {
       prevState.supplyPagination.limit !== supplyPagination.limit ||
       prevState.supplyPagination.page !== supplyPagination.page ||
       prevState.supplyPagination.total !== supplyPagination.total ||
-      prevState.supplyPagination.name !== supplyPagination.name||
-      prevState.supplyPagination.brand !== supplyPagination.brand||
+      prevState.supplyPagination.name !== supplyPagination.name ||
+      prevState.supplyPagination.brand !== supplyPagination.brand ||
       prevState.supplyPagination.range !== supplyPagination.range
-
     ) {
       if (supplyPagination.name) {
         console.log("Searching with pagination.name");
 
-        const data = await this.handleSearch(supplyPagination.name,'name');
+        const data = await this.handleSearch(supplyPagination.name, "name");
         console.log(data, "datasearch");
         this.pageLimit(data);
 
         this.updatePagination({
           total: data.length,
         });
-      }
-      else if(supplyPagination.brand){
-
-        const data = await this.handleSearch(supplyPagination.brand,'brand');
+      } else if (supplyPagination.brand) {
+        const data = await this.handleSearch(supplyPagination.brand, "brand");
         console.log(data, "brand");
         this.pageLimit(data);
 
         this.updatePagination({
           total: data.length,
         });
-
-      }
-      else if(supplyPagination.range){
-
-        const data = await this.handleSearch(supplyPagination.range,'range');
+      } else if (supplyPagination.range) {
+        const data = await this.handleSearch(supplyPagination.range, "range");
         console.log(data, "range");
         this.pageLimit(data);
 
         this.updatePagination({
           total: data.length,
         });
-
-      }
-      else {
+      } else {
         console.log("No search term, using goodsData");
 
         this.updatePagination({
@@ -248,7 +247,7 @@ class AddInventory extends Component {
 
       //   this.pageLimit();
     } catch (err) {
-      console.error(err); 
+      console.error(err);
     }
   };
 
@@ -265,7 +264,7 @@ class AddInventory extends Component {
 
       //   this.pageLimit();
     } catch (err) {
-      console.error(err); 
+      console.error(err);
     }
   };
 
@@ -335,16 +334,14 @@ class AddInventory extends Component {
       const controlNosUpdate = {
         controldescription: "Goods Receive Note",
         sitecode: "MCHQ",
-        controlnumber: newControlNo, 
+        controlnumber: newControlNo,
       };
 
       const api = "ControlNos/updatecontrol";
       const response = await Apiservice().postAPI(api, controlNosUpdate);
 
-      if (!response) return; 
-
-    } catch (err) {
-    }
+      if (!response) return;
+    } catch (err) {}
   }
 
   async getStockDetails() {
@@ -371,7 +368,7 @@ class AddInventory extends Component {
         showSpinner: false,
       }));
       console.log(updatedRes, "stoclupd");
-        // this.pageLimit(updatedRes);
+      // this.pageLimit(updatedRes);
     } catch (err) {
       // Handle the error
       console.error("Error fetching supply details:", err);
@@ -395,8 +392,7 @@ class AddInventory extends Component {
     });
   };
 
-
-  handleSearch = (value,type) => {
+  handleSearch = (value, type) => {
     let debounceTimer;
     this.setState({ showSpinner: true });
 
@@ -408,26 +404,46 @@ class AddInventory extends Component {
       debounceTimer = setTimeout(() => {
         try {
           const filteredItems = this?.state?.stockList?.filter((items) => {
-                const searchValue = value.toLowerCase();
-                console.log(type)
-                if (type === 'name') {
-                  return (
-                    items?.stockCode?.toString()?.toLowerCase().includes(searchValue) ||
-                    items?.stockName?.toString()?.toLowerCase().includes(searchValue) ||
-                    items?.itemUom?.toString()?.toLowerCase().includes(searchValue) ||
-                    items?.linkCode?.toString()?.toLowerCase().includes(searchValue) ||
-                    items?.brandCode?.toString()?.toLowerCase().includes(searchValue) ||
-                    items?.range?.toString()?.toLowerCase().includes(searchValue) ||
-                    items?.quantity?.toString()?.toLowerCase().includes(searchValue)
-                  );
-                } else if (type === 'brand') {
-                  return items?.brand?.toString()?.toLowerCase().includes(searchValue);
-                } else if (type === 'range') {
-                  return items?.range?.toString()?.toLowerCase().includes(searchValue);
-                }
-                return false; 
+            const searchValue = value.toLowerCase();
+            console.log(type);
+            if (type === "name") {
+              return (
+                items?.stockCode
+                  ?.toString()
+                  ?.toLowerCase()
+                  .includes(searchValue) ||
+                items?.stockName
+                  ?.toString()
+                  ?.toLowerCase()
+                  .includes(searchValue) ||
+                items?.itemUom
+                  ?.toString()
+                  ?.toLowerCase()
+                  .includes(searchValue) ||
+                items?.linkCode
+                  ?.toString()
+                  ?.toLowerCase()
+                  .includes(searchValue) ||
+                items?.brandCode
+                  ?.toString()
+                  ?.toLowerCase()
+                  .includes(searchValue) ||
+                items?.range?.toString()?.toLowerCase().includes(searchValue) ||
+                items?.quantity?.toString()?.toLowerCase().includes(searchValue)
+              );
+            } else if (type === "brand") {
+              return items?.brand
+                ?.toString()
+                ?.toLowerCase()
+                .includes(searchValue);
+            } else if (type === "range") {
+              return items?.range
+                ?.toString()
+                ?.toLowerCase()
+                .includes(searchValue);
+            }
+            return false;
           });
-
 
           let pagina = {
             total: filteredItems.length,
@@ -438,7 +454,7 @@ class AddInventory extends Component {
         } catch (error) {
           reject(error);
         }
-      }, 500); 
+      }, 500);
     });
   };
 
@@ -448,9 +464,8 @@ class AddInventory extends Component {
     });
   };
 
-  updateSearch = (value,type ) => {
-
-    console.log(value,type, "sear");
+  updateSearch = (value, type) => {
+    console.log(value, type, "sear");
     this.setState((prevState) => ({
       supplyPagination: {
         ...prevState.supplyPagination,
@@ -523,28 +538,31 @@ class AddInventory extends Component {
   };
 
   async postStockDetails() {
-    const { cartData } = this.state; 
+    const { cartData } = this.state;
     console.log(cartData, "data for editing");
-  
+
     this.setState({ showSpinner: true });
-  
+
     try {
       for (let item of cartData) {
         let res;
-  
+
         if (item.docId) {
-          res = await Apiservice().patchAPI(`StkMovdocDtls/${item.docId}`, item);
+          res = await Apiservice().patchAPI(
+            `StkMovdocDtls/${item.docId}`,
+            item
+          );
           console.log(res, `Updated item with docId: ${item.docId}`);
         } else {
           res = await Apiservice().postAPI("StkMovdocDtls", item);
           console.log(res, "Created new item");
         }
       }
-  
+
       this.setState({ showSpinner: false });
     } catch (err) {
-      console.error("Error during edit or create:", err); 
-      this.setState({ showSpinner: false }); 
+      console.error("Error during edit or create:", err);
+      this.setState({ showSpinner: false });
     }
   }
 
@@ -564,7 +582,7 @@ class AddInventory extends Component {
         this.addNewControlNumber();
         // this.pageLimit();
       } catch (err) {
-        console.error(err); 
+        console.error(err);
       }
     } else {
       try {
@@ -573,7 +591,6 @@ class AddInventory extends Component {
           `StkMovdocHdrs/update?[where][docNo]=${docNo}`,
           data
         );
-
 
         this.setState({
           showSpinner: false,
@@ -632,7 +649,7 @@ class AddInventory extends Component {
       };
       if (stockHdrs?.poId) data.poId = stockHdrs?.poId;
 
-      let message
+      let message;
 
       if (
         type === "save" &&
@@ -641,13 +658,11 @@ class AddInventory extends Component {
       ) {
         await this.postStockHdr(data, "create");
         await this.postStockDetails();
-        message='Note created successfully'
-
+        message = "Note created successfully";
       } else if (type === "save" && this.props.docData?.docNo) {
         await this.postStockHdr(data, "update");
         await this.postStockDetails();
-        message='Note updated successfully'
-
+        message = "Note updated successfully";
       } else if (type === "post" && this.props.docData?.docNo) {
         data = {
           ...data,
@@ -655,7 +670,7 @@ class AddInventory extends Component {
         };
         this.postStockHdr(data, "updateStatus");
         this.postStockDetails();
-        message='Note posted successfully'
+        message = "Note posted successfully";
       }
       this.props.routeto(message);
     } else {
@@ -671,7 +686,7 @@ class AddInventory extends Component {
 
     console.log(Amount, "amountttoal");
     const Quantity = this.state.cartData.reduce((acc, item) => {
-      return acc + item.docQty; 
+      return acc + item.docQty;
     }, 0);
     console.log(Quantity, "Quantity");
 
@@ -706,14 +721,18 @@ class AddInventory extends Component {
       [type]: newValue,
     };
 
-
     this.setState({ slicedDetails: updatedStockList }, () => {
       console.log("State after setState:", this.state.slicedDetails);
     });
   };
 
   handleDateChange = (e, type) => {
-    console.log(e);
+    if (type === "postDate") {
+      let postDate = moment(e.target.value).valueOf()
+      let docDate = moment(this.state.stockHdrs.docDate).valueOf()
+      if (docDate > postDate)
+        return showErrorToast("post date should be greater than doc date");
+    }
     this.setState({
       stockHdrs: {
         ...this.state.stockHdrs,
@@ -764,22 +783,22 @@ class AddInventory extends Component {
       cartData: updatedCart,
     });
     const Amount = updatedCart.reduce((acc, item) => {
-        console.log(item.Qty, item);
-        return acc + item.docQty * item.docPrice;
-      }, 0);
-  
-      console.log(Amount, "amountttoal");
-      const Quantity = updatedCart.reduce((acc, item) => {
-        return acc + item.docQty; 
-      }, 0);
-      console.log(Quantity, "Quantity");
-  
-      this.setState({
-        totalCart: {
-          amt: Amount,
-          qty: Quantity,
-        },
-      });
+      console.log(item.Qty, item);
+      return acc + item.docQty * item.docPrice;
+    }, 0);
+
+    console.log(Amount, "amountttoal");
+    const Quantity = updatedCart.reduce((acc, item) => {
+      return acc + item.docQty;
+    }, 0);
+    console.log(Quantity, "Quantity");
+
+    this.setState({
+      totalCart: {
+        amt: Amount,
+        qty: Quantity,
+      },
+    });
     this.handleCloseModal();
   };
 
@@ -788,12 +807,12 @@ class AddInventory extends Component {
     this.setState({ showModal: true });
     this.setState({
       editData: {
-        itemRemark: item?.Remarks ?? "", 
-        docQty: item?.docQty ?? "", 
-        docPrice: item?.docPrice ?? "", 
+        itemRemark: item?.Remarks ?? "",
+        docQty: item?.docQty ?? "",
+        docPrice: item?.docPrice ?? "",
       },
 
-      editIndex: i, 
+      editIndex: i,
     });
   };
 
@@ -828,7 +847,7 @@ class AddInventory extends Component {
     let idCart = {
       id: i + 1,
       docAmt: amount,
-      docNo: this.props?.docData?.docNo?? controlDatas?.docNo,
+      docNo: this.props?.docData?.docNo ?? controlDatas?.docNo,
       movCode: "GRN",
       movType: "GRN",
       docLineno: null,
@@ -892,7 +911,6 @@ class AddInventory extends Component {
 
     console.log(itemExists);
     if (!itemExists) {
-
       let cart = {
         ...idCart,
         // id: i + 1,
@@ -902,12 +920,9 @@ class AddInventory extends Component {
         cartData: [...prevState.cartData, cart],
       }));
     } else {
-
     }
     console.log(cartData, "cartdata");
   };
-
-
 
   render() {
     console.log(this.props);
@@ -928,6 +943,7 @@ class AddInventory extends Component {
       showError,
       errorMessage,
       totalCart,
+      pageSpinner,
     } = this.state;
     const headerDetails = [
       {
@@ -1102,552 +1118,567 @@ class AddInventory extends Component {
     ];
 
     return (
-      <div className="add-container">
-                <ToastComponent/>
-
-        <div className="box-in">
-          <div className="row-in">
-            <div className="section-div">
-              <div className="inText">
-                Doc No<span className="red-mand">*</span>
-              </div>
-              <input
-                value={stockHdrs.docNo}
-                className="input-field"
-                type="text"
-                disabled
-              ></input>
-            </div>
-            <div className="section-div">
-              <div className="inText">
-                Doc Date <span className="red-mand">*</span>
-              </div>
-              <input
-                value={stockHdrs.docDate}
-                disabled
-                type="date"
-                className="input-field"
-              ></input>
-            </div>
-            <div className="section-div">
-              <div className="inText">
-                Status <span className="red-mand">*</span>
-              </div>
-              <Select
-                value={statusOption.find(
-                  (option) => option.value === stockHdrs.docStatus
-                )}
-                className="select-field"
-                isDisabled={true}
-                options={statusOption}
-                onChange={(e) => this.optionClick(e, "docStatus")}
-              />
+      <div>
+        {pageSpinner ? (
+          <div className="spinner-container">
+            <div className="spinner-border" role="status">
+              <span className="sr-only">Loading...</span>
             </div>
           </div>
-          <div className="row-in">
-            <div className="section-div">
-              <div className="inText">
-                Supply No <span className="red-mand">*</span>
-              </div>
-              <Select
-                value={supplyOptions.find(
-                  (option) => option.value === stockHdrs.supplyNo
-                )}
-                // Set the selected value
-                placeholder="Select Supply No"
-                className="select-field"
-                options={supplyOptions}
-                onChange={(e) => this.optionClick(e, "supplyNo")}
-              />
-            </div>
-            <div className="section-div">
-              <div className="inText">
-                Delivery Date <span className="red-mand">*</span>
-              </div>
-              <input
-                value={stockHdrs.postDate}
-                className="input-field"
-                type="date"
-                onChange={(e) => this.handleDateChange(e, "postDate")}
-              ></input>
-            </div>
-            <div className="section-div">
-              <div className="inText">
-                Term <span className="red-mand">*</span>
-              </div>
-              <input
-                value={stockHdrs.docTerm}
-                className="input-field"
-                type="string"
-                onChange={(e) => this.handleDateChange(e, "docTerm")}
-              ></input>
-            </div>
-          </div>
-          <div className="row-in">
-            <div className="section-div">
-              <div className="inText">GR Ref 1</div>
-              <input
-                value={stockHdrs.docRef1}
-                placeholder="Enter GR Ref 1"
-                className="input-field"
-                type="string"
-                onChange={(e) => this.handleDateChange(e, "docRef1")}
-              ></input>
-            </div>
-            <div className="section-div">
-              <div className="inText">GR Ref 2</div>
-              <input
-                value={stockHdrs.docRef2}
-                placeholder="Enter GR Ref 2"
-                className="input-field"
-                type="string"
-                onChange={(e) => this.handleDateChange(e, "docRef2")}
-              ></input>
-            </div>
-            <div className="section-div">
-              <div className="inText">
-                Store Code <span className="red-mand">*</span>
-              </div>
-              <input
-                value={stockHdrs.storeNo}
-                placeholder="Enter Store Code"
-                className="input-field"
-                type="string"
-                onChange={(e) => this.handleDateChange(e, "storeNo")}
-              ></input>
-            </div>
-          </div>
-          <div className="row-in">
-            <div className="section-div">
-              <div className="inText">
-                Created By <span className="red-mand">*</span>
-              </div>
-              <Select
-                className="select-field"
-                options={userOption}
-                value={userOption.find(
-                  (option) => option.value === stockHdrs.createUser
-                )}
-                isDisabled={true}
-              />
-            </div>
-            <div className="section-div">
-              <div className="inText">Remark</div>
-              <input
-                value={stockHdrs.docRemk1}
-                placeholder="Enter Remarks"
-                className="input-field1"
-                type="string"
-                onChange={(e) => this.handleDateChange(e, "docRemk1")}
-              ></input>
-            </div>
-
-          </div>
-        </div>
-        <div className="box-detail">
-          <div className="tabBox">
-            <div
-              onClick={() => this.changeTab("detail")}
-              className={`tab ${activeTab === "detail" ? "active" : ""}`}
-            >
-              Detail
-            </div>
-            <div
-              onClick={() => this.changeTab("supplier")}
-              className={`tab ${activeTab === "supplier" ? "active" : ""}`}
-            >
-              Supplier Info
-            </div>
-          </div>
-
-          {activeTab === "detail" ? (
-            <div className="tab-detail">
-              {docData?.docStatus !== 7 && (
-                <div className="detail-filter">
-                  <div className="section-div ">
-                    <input
-                      checked={true}
-                      className="input-check"
-                      type="checkbox"
-                    ></input>
-                    <label className="ml-3">Retail Product</label>
+        ) : (
+          <div className="add-container">
+            <ToastComponent />
+            <div className="box-in">
+              <div className="row-in">
+                <div className="section-div">
+                  <div className="inText">
+                    Doc No<span className="red-mand">*</span>
                   </div>
-                  <div className="section-div ml-3 ">
-                    <input
-                      checked={true}
-                      className="input-check"
-                      type="checkbox"
-                    ></input>
-                    <label className="ml-3">Salon Product</label>
+                  <input
+                    value={stockHdrs.docNo}
+                    className="input-field"
+                    type="text"
+                    disabled
+                  ></input>
+                </div>
+                <div className="section-div">
+                  <div className="inText">
+                    Doc Date <span className="red-mand">*</span>
                   </div>
-                  <div className="section-div ml-2">
-                    <input
-                      placeholder="Enter Brand"
-                      className="input-field ml-8"
-                      type="string"
-                      value={supplyPagination.brand}
+                  <input
+                    value={stockHdrs.docDate}
+                    disabled
+                    type="date"
+                    className="input-field"
+                  ></input>
+                </div>
+                <div className="section-div">
+                  <div className="inText">
+                    Status <span className="red-mand">*</span>
+                  </div>
+                  <Select
+                    value={statusOption.find(
+                      (option) => option.value === stockHdrs.docStatus
+                    )}
+                    className="select-field"
+                    isDisabled={true}
+                    options={statusOption}
+                    onChange={(e) => this.optionClick(e, "docStatus")}
+                  />
+                </div>
+              </div>
+              <div className="row-in">
+                <div className="section-div">
+                  <div className="inText">
+                    Supply No <span className="red-mand">*</span>
+                  </div>
+                  <Select
+                    value={supplyOptions.find(
+                      (option) => option.value === stockHdrs.supplyNo
+                    )}
+                    // Set the selected value
+                    placeholder="Select Supply No"
+                    className="select-field"
+                    options={supplyOptions}
+                    onChange={(e) => this.optionClick(e, "supplyNo")}
+                  />
+                </div>
+                <div className="section-div">
+                  <div className="inText">
+                    Delivery Date <span className="red-mand">*</span>
+                  </div>
+                  <input
+                    value={stockHdrs.postDate}
+                    className="input-field"
+                    type="date"
+                    onChange={(e) => this.handleDateChange(e, "postDate")}
+                  ></input>
+                </div>
+                <div className="section-div">
+                  <div className="inText">
+                    Term <span className="red-mand">*</span>
+                  </div>
+                  <input
+                    value={stockHdrs.docTerm}
+                    className="input-field"
+                    type="string"
+                    onChange={(e) => this.handleDateChange(e, "docTerm")}
+                  ></input>
+                </div>
+              </div>
+              <div className="row-in">
+                <div className="section-div">
+                  <div className="inText">GR Ref 1</div>
+                  <input
+                    value={stockHdrs.docRef1}
+                    placeholder="Enter GR Ref 1"
+                    className="input-field"
+                    type="string"
+                    onChange={(e) => this.handleDateChange(e, "docRef1")}
+                  ></input>
+                </div>
+                <div className="section-div">
+                  <div className="inText">GR Ref 2</div>
+                  <input
+                    value={stockHdrs.docRef2}
+                    placeholder="Enter GR Ref 2"
+                    className="input-field"
+                    type="string"
+                    onChange={(e) => this.handleDateChange(e, "docRef2")}
+                  ></input>
+                </div>
+                <div className="section-div">
+                  <div className="inText">
+                    Store Code <span className="red-mand">*</span>
+                  </div>
+                  <input
+                    value={stockHdrs.storeNo}
+                    placeholder="Enter Store Code"
+                    className="input-field"
+                    type="string"
+                    onChange={(e) => this.handleDateChange(e, "storeNo")}
+                  ></input>
+                </div>
+              </div>
+              <div className="row-in">
+                <div className="section-div">
+                  <div className="inText">
+                    Created By <span className="red-mand">*</span>
+                  </div>
+                  <Select
+                    className="select-field"
+                    options={userOption}
+                    value={userOption.find(
+                      (option) => option.value === stockHdrs.createUser
+                    )}
+                    isDisabled={true}
+                  />
+                </div>
+                <div className="section-div">
+                  <div className="inText">Remark</div>
+                  <input
+                    value={stockHdrs.docRemk1}
+                    placeholder="Enter Remarks"
+                    className="input-field1"
+                    type="string"
+                    onChange={(e) => this.handleDateChange(e, "docRemk1")}
+                  ></input>
+                </div>
+              </div>
+            </div>
+            <div className="box-detail">
+              <div className="tabBox">
+                <div
+                  onClick={() => this.changeTab("detail")}
+                  className={`tab ${activeTab === "detail" ? "active" : ""}`}
+                >
+                  Detail
+                </div>
+                <div
+                  onClick={() => this.changeTab("supplier")}
+                  className={`tab ${activeTab === "supplier" ? "active" : ""}`}
+                >
+                  Supplier Info
+                </div>
+              </div>
 
-                      onChange={(e) => this.updateSearch(e?.target.value,"brand")}
-                    ></input>
-                  </div>
-                  <div className="section-div ml-8">
-                    <input
-                      placeholder="Enter Range"
-                      className="input-field"
-                      type="string"
-                      value={supplyPagination.range}
+              {activeTab === "detail" ? (
+                <div className="tab-detail">
+                  {docData?.docStatus !== 7 && (
+                    <div className="detail-filter">
+                      <div className="section-div ">
+                        <input
+                          checked={true}
+                          className="input-check"
+                          type="checkbox"
+                        ></input>
+                        <label className="ml-3">Retail Product</label>
+                      </div>
+                      <div className="section-div ml-3 ">
+                        <input
+                          checked={true}
+                          className="input-check"
+                          type="checkbox"
+                        ></input>
+                        <label className="ml-3">Salon Product</label>
+                      </div>
+                      <div className="section-div ml-2">
+                        <input
+                          placeholder="Enter Brand"
+                          className="input-field ml-8"
+                          type="string"
+                          value={supplyPagination.brand}
+                          onChange={(e) =>
+                            this.updateSearch(e?.target.value, "brand")
+                          }
+                        ></input>
+                      </div>
+                      <div className="section-div ml-8">
+                        <input
+                          placeholder="Enter Range"
+                          className="input-field"
+                          type="string"
+                          value={supplyPagination.range}
+                          onChange={(e) =>
+                            this.updateSearch(e?.target.value, "range")
+                          }
+                        ></input>
+                      </div>
+                      <div className="section-div ml-8">
+                        <input
+                          placeholder="Search by item code/item desc/... "
+                          className="input-field a"
+                          type="string"
+                          value={supplyPagination.name}
+                          onChange={(e) =>
+                            this.updateSearch(e?.target.value, "name")
+                          }
+                        ></input>
+                      </div>
+                    </div>
+                  )}
 
-                      onChange={(e) => this.updateSearch(e?.target.value,"range")}
-                    ></input>
-                  </div>
-                  <div className="section-div ml-8">
-                    <input
-                      placeholder="Search by item code/item desc/... "
-                      className="input-field a"
-                      type="string"
-                      value={supplyPagination.name}
-                      onChange={(e) => this.updateSearch(e?.target.value,"name")}
-                    ></input>
+                  <div className="table-detail">
+                    {docData?.docStatus !== 7 ? (
+                      <Table
+                        headerDetails={headerDetails}
+                        pagination={supplyPagination}
+                        updatePagination={this.updatePagination}
+                      >
+                        {showSpinner ? (
+                          <tr>
+                            <td colSpan={11}>
+                              <div className="spinner-container">
+                                <div className="spinner-border" role="status">
+                                  <span className="sr-only">Loading...</span>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : slicedDetails?.length > 0 ? (
+                          slicedDetails.map((item, i) => {
+                            return (
+                              <tr key={i}>
+                                <td>{item.stockCode}</td>
+                                <td>{item.stockName}</td>
+                                <td>{item.itemUom}</td>
+                                <td>{item.brand}</td>
+                                <td>{item.linkCode}</td>
+                                <td>{item.brandCode}</td>
+                                <td>{item.range}</td>
+                                <td>{item.quantity}</td>
+                                <td className="text-start">
+                                  <input
+                                    type="number"
+                                    className="input-s"
+                                    value={item.Qty}
+                                    onChange={(e) =>
+                                      this.handlecalc(e, i, "Qty")
+                                    }
+                                  ></input>
+                                </td>
+                                <td>
+                                  <input
+                                    value={item.Price}
+                                    type="number"
+                                    className="input-s"
+                                    onChange={(e) =>
+                                      this.handlecalc(e, i, "Price")
+                                    }
+                                  ></input>
+                                </td>
+                                <td
+                                  onClick={() => this.addToCart(i)}
+                                  className="cursor-pointer"
+                                >
+                                  <i class="bi bi-hand-index"></i>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        ) : (
+                          <tr className="no-data-row">
+                            <td className="no-data-cell" colSpan={11}>
+                              No Data
+                            </td>
+                          </tr>
+                        )}
+                      </Table>
+                    ) : (
+                      ""
+                    )}
+
+                    {cartData.length > 0 ? (
+                      <div className="mt-3">
+                        <Table headerDetails={cartHeader}>
+                          {cartData.map((item, i) => {
+                            return (
+                              <tr>
+                                <td>{}</td>
+                                <td>{}</td>
+                                <td>{i + 1}</td>
+                                <td>{item.itemcode}</td>
+                                <td>{item.itemdesc}</td>
+                                <td>{item.itmBrandDesc}</td>
+                                <td>{item.itmRangeDesc}</td>
+                                <td>{item.docPrice}</td>
+                                <td>{item.docUom}</td>
+                                <td>{item.docQty}</td>
+                                <td>{item.docAmt}</td>
+                                <td>{item?.Remarks ?? ""}</td>
+                                <td className="cursor-pointer">
+                                  {
+                                    <i
+                                      data-toggle="modal"
+                                      data-target="#exampleModal"
+                                      class="bi bi-pencil-fill"
+                                      onClick={() => this.editPopup(item, i)}
+                                    ></i>
+                                  }
+                                </td>
+                                <td
+                                  onClick={() => this.onDeleteCart(item, i)}
+                                  className="cursor-pointer"
+                                >
+                                  <i class="bi bi-trash"></i>{" "}
+                                </td>
+                                <td>{}</td>
+                                <td>{}</td>
+                              </tr>
+                            );
+                          })}
+                        </Table>
+
+                        <div className="total-div">
+                          <div className="txt">Total Cost</div>
+                          <input
+                            value={totalCart?.amt}
+                            // readOnly
+                            disabled
+                            type="number"
+                          ></input>
+                        </div>
+                      </div>
+                    ) : (
+                      ""
+                    )}
                   </div>
                 </div>
-              )}
-
-              <div className="table-detail">
-                {docData?.docStatus !== 7 ? (
-                  <Table
-                    headerDetails={headerDetails}
-                    pagination={supplyPagination}
-                    updatePagination={this.updatePagination}
-                  >
-                    {showSpinner ? (
-                      <tr>
-                        <td colSpan={11}>
-                          <div className="spinner-container">
-                            <div className="spinner-border" role="status">
-                              <span className="sr-only">Loading...</span>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : slicedDetails?.length > 0 ? (
-                      slicedDetails.map((item, i) => {
-                        return (
-                          <tr key={i}>
-                            <td>{item.stockCode}</td>
-                            <td>{item.stockName}</td>
-                            <td>{item.itemUom}</td>
-                            <td>{item.brand}</td>
-                            <td>{item.linkCode}</td>
-                            <td>{item.brandCode}</td>
-                            <td>{item.range}</td>
-                            <td>{item.quantity}</td>
-                            <td className="text-start">
-                              <input
-                                type="number"
-                                className="input-s"
-                                value={item.Qty}
-                                onChange={(e) => this.handlecalc(e, i, "Qty")}
-                              ></input>
-                            </td>
-                            <td>
-                              <input
-                                value={item.Price}
-                                type="number"
-                                className="input-s"
-                                onChange={(e) => this.handlecalc(e, i, "Price")}
-                              ></input>
-                            </td>
-                            <td
-                              onClick={() => this.addToCart(i)}
-                              className="cursor-pointer"
-                            >
-                              <i class="bi bi-hand-index"></i>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr className="no-data-row">
-                        <td className="no-data-cell" colSpan={11}>
-                          No Data
-                        </td>
-                      </tr>
-                    )}
-                  </Table>
-                ) : (
-                  ""
-                )}
-
-                {cartData.length > 0 ? (
-                  <div className="mt-3">
-                    <Table headerDetails={cartHeader}>
-                      {cartData.map((item, i) => {
-                        return (
-                          <tr>
-                            <td>{}</td>
-                            <td>{}</td>
-                            <td>{i + 1}</td>
-                            <td>{item.itemcode}</td>
-                            <td>{item.itemdesc}</td>
-                            <td>{item.itmBrandDesc}</td>
-                            <td>{item.itmRangeDesc}</td>
-                            <td>{item.docPrice}</td>
-                            <td>{item.docUom}</td>
-                            <td>{item.docQty}</td>
-                            <td>{item.docAmt}</td>
-                            <td>{item?.Remarks ?? ""}</td>
-                            <td
-                              className="cursor-pointer"
-                            >
-                              {
-                                <i
-                                  data-toggle="modal"
-                                  data-target="#exampleModal"
-                                  class="bi bi-pencil-fill"
-                                  onClick={() => this.editPopup(item, i)}
-                                ></i>
-                              }
-                            </td>
-                            <td
-                              onClick={() => this.onDeleteCart(item, i)}
-                              className="cursor-pointer"
-                            >
-                              <i class="bi bi-trash"></i>{" "}
-                            </td>
-                            <td>{}</td>
-                            <td>{}</td>
-                          </tr>
-                        );
-                      })}
-                    </Table>
-
-                    <div className="total-div">
-                      <div className="txt">Total Cost</div>
+              ) : (
+                <div className="tab-supply">
+                  <div className="row-in">
+                    <div className="section-div">
+                      <div className="inText">
+                        Attn To<span className="red-mand">*</span>
+                      </div>
                       <input
-                        value={totalCart?.amt}
-                        // readOnly
-                        disabled
-                        type="number"
+                        value={supplierInfo.Attn}
+                        className="input-field"
+                        type="string"
+                        onChange={(e) => this.handleDateChange2(e, "Attn")}
                       ></input>
                     </div>
                   </div>
-                ) : (
-                  ""
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="tab-supply">
-              <div className="row-in">
-                <div className="section-div">
-                  <div className="inText">
-                    Attn To<span className="red-mand">*</span>
-                  </div>
-                  <input
-                    value={supplierInfo.Attn}
-                    className="input-field"
-                    type="string"
-                    onChange={(e) => this.handleDateChange2(e, "Attn")}
-                  ></input>
-                </div>
-              </div>
 
-              <div className="row-in">
-                <div className="section-div">
-                  <div className="inText">
-                    Address<span className="red-mand">*</span>
-                  </div>
-                  <input
-                    value={supplierInfo.line1}
-                    className="input-field"
-                    type="string"
-                    onChange={(e) => this.handleDateChange2(e, "line1")}
-                  ></input>
-                </div>
-                <div className="section-div">
-                  <div className="inText">
-                    Ship To Address<span className="red-mand">*</span>
-                  </div>
-                  <input
-                    value={supplierInfo.sline1}
-                    className="input-field"
-                    type="string"
-                    onChange={(e) => this.handleDateChange2(e, "sline1")}
-                  ></input>
-                </div>
-              </div>
-              <div className="row-in">
-                <div className="section-div">
-                  <input
-                    value={supplierInfo.line2}
-                    className="input-field"
-                    type="string"
-                    onChange={(e) => this.handleDateChange2(e, "line2")}
-                  ></input>
-                </div>
-                <div className="section-div">
-                  <input
-                    value={supplierInfo.sline2}
-                    className="input-field"
-                    type="string"
-                    onChange={(e) => this.handleDateChange2(e, "sline2")}
-                  ></input>
-                </div>
-              </div>
-              <div className="row-in">
-                <div className="section-div">
-                  <input
-                    value={supplierInfo.line3}
-                    className="input-field"
-                    type="string"
-                    onChange={(e) => this.handleDateChange2(e, "line3")}
-                  ></input>
-                </div>
-                <div className="section-div">
-                  <input
-                    value={supplierInfo.sline3}
-                    className="input-field"
-                    type="string"
-                    onChange={(e) => this.handleDateChange2(e, "sline3")}
-                  ></input>
-                </div>
-              </div>
-              <div className="row-in">
-                <div className="section-div">
-                  <div className="inText">
-                    Post Code<span className="red-mand">*</span>
-                  </div>
-                  <input
-                    value={supplierInfo.pcode}
-                    className="input-field"
-                    type="string"
-                    onChange={(e) => this.handleDateChange2(e, "pcode")}
-                  ></input>
-                </div>
-                <div className="section-div">
-                  <div className="inText">
-                    Post Code<span className="red-mand">*</span>
-                  </div>
-                  <input
-                    value={supplierInfo.spcode}
-                    className="input-field"
-                    type="string"
-                    onChange={(e) => this.handleDateChange2(e, "spcode")}
-                  ></input>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        {showError && 
-        showErrorToast(errorMessage)
-        }
-        <div
-          className={`modal fade show`} 
-          id="exampleModal"
-          tabindex="-1"
-          role="dialog"
-          aria-labelledby="exampleModalLabel"
-          aria-hidden="true"
-
-        >
-          <div
-            className="modal-dialog modal-dialog-centered show"
-            role="document"
-          >
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title" id="exampleModalLabel">
-                  Edit Qty/Price
-                </h5>
-                <button
-                  type="button"
-                  className="close"
-                  data-dismiss="modal"
-                  aria-label="Close"
-                >
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div className="modal-body">
-                <div className="row-in">
-                  <div className="section-div">
-                    <div className="inText">Qty</div>
-                    <input
-                      onChange={(e) => this.onEditCart(e, "docQty")}
-                      value={editData.docQty}
-                      className="input-field"
-                      type="string"
-                    ></input>
-                  </div>
-                  <div className="section-div ml-4">
-                    <div className="inText">
-                      Price<span className="red-mand">*</span>
+                  <div className="row-in">
+                    <div className="section-div">
+                      <div className="inText">
+                        Address<span className="red-mand">*</span>
+                      </div>
+                      <input
+                        value={supplierInfo.line1}
+                        className="input-field"
+                        type="string"
+                        onChange={(e) => this.handleDateChange2(e, "line1")}
+                      ></input>
                     </div>
-                    <input
-                      onChange={(e) => this.onEditCart(e, "docPrice")}
-                      value={editData.docPrice}
-                      className="input-field"
-                      type="string"
-                    ></input>
+                    <div className="section-div">
+                      <div className="inText">
+                        Ship To Address<span className="red-mand">*</span>
+                      </div>
+                      <input
+                        value={supplierInfo.sline1}
+                        className="input-field"
+                        type="string"
+                        onChange={(e) => this.handleDateChange2(e, "sline1")}
+                      ></input>
+                    </div>
+                  </div>
+                  <div className="row-in">
+                    <div className="section-div">
+                      <input
+                        value={supplierInfo.line2}
+                        className="input-field"
+                        type="string"
+                        onChange={(e) => this.handleDateChange2(e, "line2")}
+                      ></input>
+                    </div>
+                    <div className="section-div">
+                      <input
+                        value={supplierInfo.sline2}
+                        className="input-field"
+                        type="string"
+                        onChange={(e) => this.handleDateChange2(e, "sline2")}
+                      ></input>
+                    </div>
+                  </div>
+                  <div className="row-in">
+                    <div className="section-div">
+                      <input
+                        value={supplierInfo.line3}
+                        className="input-field"
+                        type="string"
+                        onChange={(e) => this.handleDateChange2(e, "line3")}
+                      ></input>
+                    </div>
+                    <div className="section-div">
+                      <input
+                        value={supplierInfo.sline3}
+                        className="input-field"
+                        type="string"
+                        onChange={(e) => this.handleDateChange2(e, "sline3")}
+                      ></input>
+                    </div>
+                  </div>
+                  <div className="row-in">
+                    <div className="section-div">
+                      <div className="inText">
+                        Post Code<span className="red-mand">*</span>
+                      </div>
+                      <input
+                        value={supplierInfo.pcode}
+                        className="input-field"
+                        type="string"
+                        onChange={(e) => this.handleDateChange2(e, "pcode")}
+                      ></input>
+                    </div>
+                    <div className="section-div">
+                      <div className="inText">
+                        Post Code<span className="red-mand">*</span>
+                      </div>
+                      <input
+                        value={supplierInfo.spcode}
+                        className="input-field"
+                        type="string"
+                        onChange={(e) => this.handleDateChange2(e, "spcode")}
+                      ></input>
+                    </div>
                   </div>
                 </div>
+              )}
+            </div>
+            {showError && showErrorToast(errorMessage)}
+            <div
+              className={`modal fade show`}
+              id="exampleModal"
+              tabindex="-1"
+              role="dialog"
+              aria-labelledby="exampleModalLabel"
+              aria-hidden="true"
+            >
+              <div
+                className="modal-dialog modal-dialog-centered show"
+                role="document"
+              >
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title" id="exampleModalLabel">
+                      Edit Qty/Price
+                    </h5>
+                    <button
+                      type="button"
+                      className="close"
+                      data-dismiss="modal"
+                      aria-label="Close"
+                    >
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="row-in">
+                      <div className="section-div">
+                        <div className="inText">Qty</div>
+                        <input
+                          onChange={(e) => this.onEditCart(e, "docQty")}
+                          value={editData.docQty}
+                          className="input-field"
+                          type="string"
+                        ></input>
+                      </div>
+                      <div className="section-div ml-4">
+                        <div className="inText">
+                          Price<span className="red-mand">*</span>
+                        </div>
+                        <input
+                          onChange={(e) => this.onEditCart(e, "docPrice")}
+                          value={editData.docPrice}
+                          className="input-field"
+                          type="string"
+                        ></input>
+                      </div>
+                    </div>
 
-                <div className="remark-div">
-                  <div className="inText">Remarks</div>
-                  <input
-                    onChange={(e) => this.onEditCart(e, "itemRemark")}
-                    value={editData.itemRemark}
-                    className="input-field"
-                    type="string"
-                  ></input>
+                    <div className="remark-div">
+                      <div className="inText">Remarks</div>
+                      <input
+                        onChange={(e) => this.onEditCart(e, "itemRemark")}
+                        value={editData.itemRemark}
+                        className="input-field"
+                        type="string"
+                      ></input>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      data-dismiss="modal"
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => this.onSave()}
+                    >
+                      Save changes
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  data-dismiss="modal"
-                >
-                  Close
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => this.onSave()}
-                >
-                  Save changes
-                </button>
+            </div>
+            <div className="onSave-div">
+              <div
+                onClick={(e) => {
+                  this.onSubmit(e, "save");
+                }}
+                className={`btn save ${
+                  stockHdrs.docStatus === 7 && "disabled"
+                } `}
+              >
+                Save
+              </div>
+              <div
+                onClick={(e) => {
+                  this.onSubmit(e, "post");
+                }}
+                className={`btn post ${
+                  stockHdrs.docStatus === 7 || !this.props?.docData?.docNo
+                    ? "disabled"
+                    : ""
+                } `}
+              >
+                Post
+              </div>
+              <div onClick={() => this.props.routeto()} className="btn list">
+                {/* <div onClick={() => this.print()} className="btn list"> */}
+                List
               </div>
             </div>
           </div>
-        </div>
-        <div className="onSave-div">
-          <div
-            onClick={(e) => {
-              this.onSubmit(e, "save");
-            }}
-            className={`btn save ${stockHdrs.docStatus === 7 && "disabled"} `}
-          >
-            Save
-          </div>
-          <div
-            onClick={(e) => {
-              this.onSubmit(e, "post");
-            }}
-            className={`btn post ${
-              stockHdrs.docStatus === 7 || !this.props?.docData?.docNo ? "disabled" : ""
-            } `}
-          >
-            Post
-          </div>
-          <div onClick={() => this.props.routeto()} className="btn list">
-          {/* <div onClick={() => this.print()} className="btn list"> */}
-            List
-          </div>
-        </div>
+        )}
       </div>
     );
   }
 }
-export default withRouter(AddInventory); 
+export default withRouter(AddInventory);

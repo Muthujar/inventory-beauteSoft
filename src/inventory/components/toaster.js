@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const ToastComponent = () => {
   return <ToastContainer position="bottom-left"
-  autoClose={3000}
+  autoClose={false}
   hideProgressBar={true}
   closeOnClick
   rtl={false}
@@ -12,6 +12,8 @@ const ToastComponent = () => {
   draggable
   pauseOnHover
   theme="light" 
+  
+  className={'Toastify__toast-body'}
   />;
 };
 

@@ -213,7 +213,7 @@ export default class Goods extends Component {
       {
         label: "Doc Number",
         sortKey: "docNo",
-        enabled:true,
+        enabled: true,
         singleClickFunc: () => this.handleSort("docNo"),
       },
       {
@@ -250,7 +250,7 @@ export default class Goods extends Component {
 
     return (
       <div className="notes-wrapper">
-        <ToastComponent/>
+        <ToastComponent />
         <div className="notes-container">
           <div className="title">Goods Receive Note List</div>
           <div className="notes-filter">
