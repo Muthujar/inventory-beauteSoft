@@ -93,7 +93,7 @@ class AddInventory extends Component {
   async componentDidMount() {
     console.log(this.props);
     const { docData } = this.props;
-    // this.setState({ showSpinner: true });
+    this.setState({ pageSpinner: true });
 
     if (docData) {
       const filter = {
@@ -105,8 +105,10 @@ class AddInventory extends Component {
 
       await this.getStockHdrDetails(filter);
       await this.getSupplyList(this.state.stockHdrs.supplyNo);
+      this.setState({ pageSpinner: false });
+
     } else {
-      this.setState({ pageSpinner: true });
+    //   this.setState({ pageSpinner: true });
 
       const today = new Date().toISOString().split("T")[0];
       this.setState((prevState) => ({
@@ -180,7 +182,7 @@ class AddInventory extends Component {
     if (prevState.stockHdrs.supplyNo !== this.state.stockHdrs.supplyNo) {
       console.log(prevState.stockHdrs.supplyNo);
 
-      this.setSupplierInfo();
+     !this.props.docData && this.setSupplierInfo();
     }
   };
 
@@ -190,10 +192,10 @@ class AddInventory extends Component {
 
   setSupplierInfo() {
     const { stockHdrs, supplyList } = this.state;
+    console.log('firstfirstfirst')
     const data = supplyList.find(
       (item, i) => stockHdrs.supplyNo === item.splyCode
     );
-
     this.setState({
       supplierInfo: {
         Attn: data?.splyAttn,
@@ -230,6 +232,7 @@ class AddInventory extends Component {
       const docQty = data?.docQty;
 
       console.log(docAmt, typeof docAmt, docAmt.length, "docamt");
+    console.log(data,'dara')
 
       this.setState({
         stockHdrs: {
@@ -237,6 +240,17 @@ class AddInventory extends Component {
           docDate: docDate,
           postDate: postDate,
         },
+        supplierInfo: {
+            Attn: data?.docAttn,
+            line1: data?.baddr1,
+            line2: data?.baddr2,
+            line3: data?.baddr3,
+            pcode: data?.bpostcode,
+            sline1: data?.daddr1,
+            sline2: data?.daddr2,
+            sline3: data?.daddr3,
+            spcode: data?.dpostcode,
+          },
         showSpinner: false,
         totalCart: {
           ...this.state.totalCart,
@@ -379,7 +393,7 @@ class AddInventory extends Component {
     const { cartData } = this.state;
     console.log(cartData, "data for editing");
 
-    this.setState({ showSpinner: true });
+    // this.setState({ showSpinner: true });
 
     try {
       for (let item of cartData) {
@@ -587,6 +601,29 @@ class AddInventory extends Component {
       errors["cart"] = "cart shouldn't be empty";
     }
 
+    if (!supplierInfo.Attn) {
+        formIsValid = false;
+        errors["Attn"] = "Attn  is required";
+      }
+      if (!supplierInfo.line1) {
+        formIsValid = false;
+        errors["Attn"] = "Address  is required";
+      }
+      if (!supplierInfo.sline1) {
+        formIsValid = false;
+        errors["Attn"] = "shipper Address  is required";
+      }
+
+    if (!supplierInfo.spcode) {
+        formIsValid = false;
+        errors["Attn"] = "shipper postal code  is required";
+      }
+
+
+    if (!supplierInfo.pcode) {
+        formIsValid = false;
+        errors["Attn"] = "postal code  is required";
+      }
     this.setState({ errors });
     console.log(formIsValid, this.state.errors);
 
@@ -671,8 +708,8 @@ class AddInventory extends Component {
           ...data,
           docStatus: 7,
         };
-        this.postStockHdr(data, "updateStatus");
-        this.postStockDetails();
+        await this.postStockHdr(data, "updateStatus");
+        await this.postStockDetails();
         message = "Note posted successfully";
       }
       this.props.routeto(message);
@@ -773,6 +810,7 @@ class AddInventory extends Component {
 
   onSave = () => {
     const { cartData, editData, editIndex } = this.state;
+    console.log(editData,'edar')
 
     let updatedCart = [...cartData];
     let updated = {
@@ -1427,7 +1465,7 @@ class AddInventory extends Component {
                                 <td>{item.docUom}</td>
                                 <td>{item.docQty}</td>
                                 <td>{item.docAmt}</td>
-                                <td>{item?.Remarks ?? ""}</td>
+                                <td>{item?.itemRemark ?? ""}</td>
                                 <td className="cursor-pointer">
                                   {
                                     <i

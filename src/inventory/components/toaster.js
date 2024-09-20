@@ -12,11 +12,11 @@ const ToastComponent = () => {
   draggable
   pauseOnHover
   theme="light" 
-  
   />;
 };
 
 export const showSuccessToast = (message) => {
+  console.log(message,'fahr')
   toast.success(message);
 };
 

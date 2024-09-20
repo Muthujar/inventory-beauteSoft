@@ -5,8 +5,8 @@ import Apiservice from "../constants/apiservice";
 import { queryParamsGenerate } from "../utils";
 import printer from "../assets/icons/print-solid.svg";
 import moment from "moment";
-import Toaster, { showSuccessToast } from "../components/toaster";
-import ToastComponent from "../components/toaster";
+import ToastComponent, { showSuccessToast } from "../components/toaster";
+// import ToastComponent from "../components/toaster";
 
 export default class Goods extends Component {
   constructor(props) {
@@ -41,6 +41,8 @@ export default class Goods extends Component {
   componentDidMount() {
     this.setState({ showSpinner: true });
     this.getNoteTable();
+    // showSuccessToast('toast')
+
   }
 
   componentDidUpdate = async (prevProps, prevState) => {
@@ -61,7 +63,6 @@ export default class Goods extends Component {
         this.pageLimit(goodsData);
       }
     }
-
     if (prevState.activeFilter !== this.state.activeFilter) {
       if (this.state.activeFilter !== "all") {
         this.setState(
@@ -166,13 +167,15 @@ export default class Goods extends Component {
     });
   };
 
-  routeto = (message) => {
+  routeto = (toast) => {
     this.setState({
       activeFilter: "Open",
       filter: { ...this.state.filter, docStatus: 0 },
       propDocdata: { docNo: null, docStatus: null },
     });
-    if (message) this.showSuccessToast(message);
+    setTimeout(()=>{
+        showSuccessToast(toast)
+    },100)
   };
 
   handleSort = (sortKey) => {
@@ -250,7 +253,6 @@ export default class Goods extends Component {
 
     return (
       <div className="notes-wrapper">
-        <ToastComponent />
         <div className="notes-container">
           <div className="title">Goods Receive Note List</div>
           <div className="notes-filter">
@@ -277,6 +279,7 @@ export default class Goods extends Component {
           />
         ) : (
           <div>
+            <ToastComponent />
             <Table
               headerDetails={headerDetails}
               pagination={pagination}
@@ -329,7 +332,7 @@ export default class Goods extends Component {
           </div>
         )}
 
-        {this.state.showSuccessToast && (
+        {/* {this.state.showSuccessToast && (
           <div
             className="toast show align-items-center text-bg-success border-0"
             role="alert"
@@ -343,7 +346,7 @@ export default class Goods extends Component {
               ></button>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     );
   }
