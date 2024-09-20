@@ -7,6 +7,7 @@ import { queryParamsGenerate, stockHdrs } from "../utils";
 import withRouter from "../components/withRouter";
 import moment from "moment";
 import Toast from "../components/toast";
+import ToastComponent, { showErrorToast, showSuccessToast } from "../components/toaster";
 
 class AddInventory extends Component {
   constructor(props) {
@@ -77,7 +78,7 @@ class AddInventory extends Component {
         spcode: "",
       },
       errors: {},
-      showErrorToast: false,
+      showError: false,
       errorMessage: "",
       showToast: false,
       message: "", // holds the message for the toast
@@ -429,7 +430,7 @@ class AddInventory extends Component {
     });
   };
 
-  updateSearch = (value) => {
+  updateSearch = (value ) => {
     console.log(value, "sear");
     this.setState((prevState) => ({
       supplyPagination: {
@@ -494,7 +495,7 @@ class AddInventory extends Component {
     if (!formIsValid) {
       console.log(this.state.errors);
       this.setState({
-        showErrorToast: true,
+        showError: true,
         errorMessage: "Please fill all required fields.",
       });
     }
@@ -801,7 +802,7 @@ class AddInventory extends Component {
     const { stockList, controlDatas, cartData, slicedDetails } = this.state;
 
     let item = slicedDetails[i];
-    if (item.Qty === 0) return window.alert("quantity should not be empty");
+    if (item.Qty === 0) return showErrorToast("quantity should not be empty");
 
     const amount = item.Qty * item.Price;
 
@@ -905,7 +906,7 @@ class AddInventory extends Component {
       slicedDetails,
       supplyOptions,
       supplierInfo,
-      showErrorToast,
+      showError,
       errorMessage,
       totalCart,
     } = this.state;
@@ -1083,6 +1084,8 @@ class AddInventory extends Component {
 
     return (
       <div className="add-container">
+                <ToastComponent/>
+
         <div className="box-in">
           <div className="row-in">
             <div className="section-div">
@@ -1263,6 +1266,7 @@ class AddInventory extends Component {
                       placeholder="Enter Brand"
                       className="input-field ml-8"
                       type="string"
+                      onChange={(e) => this.updateSearch(e?.target.value,"brand")}
                     ></input>
                   </div>
                   <div className="section-div ml-8">
@@ -1270,6 +1274,7 @@ class AddInventory extends Component {
                       placeholder="Enter Range"
                       className="input-field"
                       type="string"
+                      onChange={(e) => this.updateSearch(e?.target.value,"range")}
                     ></input>
                   </div>
                   <div className="section-div ml-8">
@@ -1278,7 +1283,7 @@ class AddInventory extends Component {
                       className="input-field a"
                       type="string"
                       value={supplyPagination.name}
-                      onChange={(e) => this.updateSearch(e?.target.value)}
+                      onChange={(e) => this.updateSearch(e?.target.value,"all")}
                     ></input>
                   </div>
                 </div>
@@ -1511,24 +1516,29 @@ class AddInventory extends Component {
             </div>
           )}
         </div>
-        {showErrorToast && (
-          <div
-            className="toast show align-items-center text-bg-danger border-0"
-            role="alert"
-            aria-live="assertive"
-            aria-atomic="true"
-          >
-            <div className="d-flex">
-              <div className="toast-body">{errorMessage}</div>
-              <button
-                type="button"
-                className="btn-close btn-close-white me-2 m-auto"
-                aria-label="Close"
-                onClick={() => this.setState({ showErrorToast: false })}
-              ></button>
-            </div>
-          </div>
-        )}
+        {showError && 
+        showErrorToast(errorMessage)
+        
+        // (
+        //   <div
+        //     className="toast show align-items-center text-bg-danger border-0"
+        //     role="alert"
+        //     aria-live="assertive"
+        //     aria-atomic="true"
+        //   >
+        //     <div className="d-flex">
+        //       <div className="toast-body">{errorMessage}</div>
+        //       <button
+        //         type="button"
+        //         className="btn-close btn-close-white me-2 m-auto"
+        //         aria-label="Close"
+        //         onClick={() => this.setState({ showErrorToast: false })}
+        //       ></button>
+        //     </div>
+        //   </div>
+        // )
+        
+        }
 
         <div
           className={`modal fade show`} 

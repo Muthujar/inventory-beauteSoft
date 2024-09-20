@@ -5,6 +5,8 @@ import Apiservice from "../constants/apiservice";
 import { queryParamsGenerate } from "../utils";
 import printer from "../assets/icons/print-solid.svg";
 import moment from "moment";
+import Toaster, { showSuccessToast } from "../components/toaster";
+import ToastComponent from "../components/toaster";
 
 export default class Goods extends Component {
   constructor(props) {
@@ -21,8 +23,8 @@ export default class Goods extends Component {
         movCode: "GRN",
       },
       propDocdata: {
-        docNo: '',
-        docStatus: ''
+        docNo: "",
+        docStatus: "",
       },
       pagination: {
         limit: 10,
@@ -61,19 +63,22 @@ export default class Goods extends Component {
     }
 
     if (prevState.activeFilter !== this.state.activeFilter) {
-      if (this.state.activeFilter !== 'all') {
-        this.setState({
-          goodsData: [],
-          slicedData: [],
-          pagination: { ...pagination, page: 1 },
-        }, this.getNoteTable);
+      if (this.state.activeFilter !== "all") {
+        this.setState(
+          {
+            goodsData: [],
+            slicedData: [],
+            pagination: { ...pagination, page: 1 },
+          },
+          this.getNoteTable
+        );
       }
     }
   };
 
   updatePagination = (newPagination) => {
-    this.setState(prevState => ({
-      pagination: { ...prevState.pagination, ...newPagination }
+    this.setState((prevState) => ({
+      pagination: { ...prevState.pagination, ...newPagination },
     }));
   };
 
@@ -86,12 +91,19 @@ export default class Goods extends Component {
 
       debounceTimer = setTimeout(() => {
         try {
-          const filteredItems = this.state.goodsData.filter(item => 
-            item.docNo.toLowerCase().includes(value.toLowerCase()) ||
-            moment(item.docDate).format("DD/MM/YYYY").includes(value) ||
-            item.docRef1?.toLowerCase().includes(value.toLowerCase()) ||
-            item.supplyNo?.toString().toLowerCase().includes(value.toLowerCase()) ||
-            item.docAmt?.toString().toLowerCase().includes(value.toLowerCase())
+          const filteredItems = this.state.goodsData.filter(
+            (item) =>
+              item.docNo.toLowerCase().includes(value.toLowerCase()) ||
+              moment(item.docDate).format("DD/MM/YYYY").includes(value) ||
+              item.docRef1?.toLowerCase().includes(value.toLowerCase()) ||
+              item.supplyNo
+                ?.toString()
+                .toLowerCase()
+                .includes(value.toLowerCase()) ||
+              item.docAmt
+                ?.toString()
+                .toLowerCase()
+                .includes(value.toLowerCase())
           );
           this.updatePagination({ total: filteredItems.length });
           resolve(filteredItems);
@@ -121,7 +133,7 @@ export default class Goods extends Component {
   getNoteTable = () => {
     Apiservice()
       .getAPI(`StkMovdocHdrs${queryParamsGenerate(this.state.filter)}`)
-      .then(res => {
+      .then((res) => {
         this.setState({
           goodsData: res,
           pagination: { ...this.state.pagination, total: res.length },
@@ -129,13 +141,13 @@ export default class Goods extends Component {
         });
         this.pageLimit(res);
       })
-      .catch(err => console.error(err));
+      .catch((err) => console.error(err));
   };
 
   handleFilter = (status) => {
     const value = status === "Open" ? 0 : status === "Posted" ? 7 : null;
 
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       activeFilter: status,
       propDocdata: { docNo: null, docStatus: null },
       pagination: { ...prevState.pagination, name: "", page: 1 },
@@ -146,7 +158,7 @@ export default class Goods extends Component {
 
   handleDetails = (item) => {
     this.setState({
-      activeFilter: 'New',
+      activeFilter: "New",
       propDocdata: {
         docNo: item?.docNo ?? null,
         docStatus: item?.docStatus ?? null,
@@ -160,15 +172,19 @@ export default class Goods extends Component {
       filter: { ...this.state.filter, docStatus: 0 },
       propDocdata: { docNo: null, docStatus: null },
     });
-    if (message) this.showToastMessage(message);
+    if (message) this.showSuccessToast(message);
   };
 
   handleSort = (sortKey) => {
     const { slicedData, orderBy } = this.state;
     const sortedData = [...slicedData].sort((a, b) =>
       orderBy === "asc"
-        ? a[sortKey] > b[sortKey] ? 1 : -1
-        : a[sortKey] < b[sortKey] ? 1 : -1
+        ? a[sortKey] > b[sortKey]
+          ? 1
+          : -1
+        : a[sortKey] < b[sortKey]
+        ? 1
+        : -1
     );
     this.setState({
       slicedData: sortedData,
@@ -178,29 +194,73 @@ export default class Goods extends Component {
 
   dateConvert = (value) => {
     const date = new Date(value);
-    return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
+    return `${String(date.getDate()).padStart(2, "0")}/${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}/${date.getFullYear()}`;
   };
 
   render() {
-    const { activeFilter, showSpinner, goodsData, pagination, slicedData, orderBy } = this.state;
+    const {
+      activeFilter,
+      showSpinner,
+      goodsData,
+      pagination,
+      slicedData,
+      orderBy,
+    } = this.state;
     const filters = ["Open", "Posted", "All", "New"];
     const headerDetails = [
-      { label: "Doc Number", sortKey: "docNo", singleClickFunc: () => this.handleSort("docNo") },
-      { label: "Invoice Date", sortKey: "docDate", singleClickFunc: () => this.handleSort("docDate") },
-      { label: "Ref Num", sortKey: "docRef1", singleClickFunc: () => this.handleSort("docRef1") },
-      { label: "Supplier", sortKey: "supplyNo", singleClickFunc: () => this.handleSort("supplyNo") },
-      { label: "Total Amount", sortKey: "docAmt", singleClickFunc: () => this.handleSort("docAmt") },
-      { label: "Status", sortKey: "docStatus", singleClickFunc: () => this.handleSort("docStatus") },
-      { label: "Print", sortKey: "print", singleClickFunc: () => this.printNote },
+      {
+        label: "Doc Number",
+        sortKey: "docNo",
+        singleClickFunc: () => this.handleSort("docNo"),
+      },
+      {
+        label: "Invoice Date",
+        sortKey: "docDate",
+        singleClickFunc: () => this.handleSort("docDate"),
+      },
+      {
+        label: "Ref Num",
+        sortKey: "docRef1",
+        singleClickFunc: () => this.handleSort("docRef1"),
+      },
+      {
+        label: "Supplier",
+        sortKey: "supplyNo",
+        singleClickFunc: () => this.handleSort("supplyNo"),
+      },
+      {
+        label: "Total Amount",
+        sortKey: "docAmt",
+        singleClickFunc: () => this.handleSort("docAmt"),
+      },
+      {
+        label: "Status",
+        sortKey: "docStatus",
+        singleClickFunc: () => this.handleSort("docStatus"),
+      },
+      {
+        label: "Print",
+        sortKey: "print",
+        singleClickFunc: () => this.printNote,
+      },
     ];
 
     return (
       <div className="notes-wrapper">
+        <ToastComponent/>
         <div className="notes-container">
           <div className="title">Goods Receive Note List</div>
           <div className="notes-filter">
             {filters.map((item, i) => (
-              <div key={i} onClick={() => this.handleFilter(item)} className={`btn-filter ${activeFilter === item ? "active" : ""}`}>
+              <div
+                key={i}
+                onClick={() => this.handleFilter(item)}
+                className={`btn-filter ${
+                  activeFilter === item ? "active" : ""
+                }`}
+              >
                 {item}
               </div>
             ))}
@@ -208,7 +268,12 @@ export default class Goods extends Component {
         </div>
 
         {activeFilter === "New" ? (
-          <AddInventory routeto={this.routeto} docData={this.state.propDocdata?.docNo ? this.state.propDocdata : null} />
+          <AddInventory
+            routeto={this.routeto}
+            docData={
+              this.state.propDocdata?.docNo ? this.state.propDocdata : null
+            }
+          />
         ) : (
           <div>
             <Table
@@ -231,20 +296,32 @@ export default class Goods extends Component {
               ) : slicedData.length > 0 ? (
                 slicedData.map((item, i) => (
                   <tr key={i}>
-                    <td onClick={() => this.handleDetails(item)} className="cursor-pointer">{item.docNo}</td>
+                    <td
+                      onClick={() => this.handleDetails(item)}
+                      className="cursor-pointer"
+                    >
+                      {item.docNo}
+                    </td>
                     <td>{this.dateConvert(item.docDate)}</td>
                     <td>{item.docRef1 || "-"}</td>
                     <td>{item.supplyNo}</td>
                     <td>{item.docAmt}</td>
                     <td>{item.docStatus}</td>
                     <td>
-                      <img onClick={() => this.printNote(item)} className="icon-print" src={printer} alt="Print" />
+                      <img
+                        onClick={() => this.printNote(item)}
+                        className="icon-print"
+                        src={printer}
+                        alt="Print"
+                      />
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr className="no-data-row">
-                  <td className="no-data-cell" colSpan={7}>No Data</td>
+                  <td className="no-data-cell" colSpan={7}>
+                    No Data
+                  </td>
                 </tr>
               )}
             </Table>
@@ -252,12 +329,17 @@ export default class Goods extends Component {
         )}
 
         {this.state.showSuccessToast && (
-          <div className="toast show align-items-center text-bg-success border-0" role="alert">
+          <div
+            className="toast show align-items-center text-bg-success border-0"
+            role="alert"
+          >
             <div className="d-flex">
-              <div className="toast-body">
-                {this.state.message}
-              </div>
-              <button type="button" className="btn-close btn-close-white me-2 m-auto" aria-label="Close"></button>
+              <div className="toast-body">{this.state.message}</div>
+              <button
+                type="button"
+                className="btn-close btn-close-white me-2 m-auto"
+                aria-label="Close"
+              ></button>
             </div>
           </div>
         )}
