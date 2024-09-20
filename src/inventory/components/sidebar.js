@@ -12,7 +12,7 @@ import withRouter from "./withRouter";
   }
 
   sidebarLinks = [
-    { path: "/inventory", icon: checklist, title: "Inventory" },
+    { path: "", icon: checklist, title: "Inventory" },
     { path: "/goods-receive-note", icon: send, title: "Goods Receive Note" },
     { path: "/goods-transfer-out", icon: send, title: "Goods Transfer Out" },
     { path: "/goods-transfer-in", icon: send, title: "Goods Transfer In" },
