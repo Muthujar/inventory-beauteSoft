@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const ToastComponent = () => {
   return <ToastContainer position="bottom-left"
-  autoClose={false}
+  autoClose={3000}
   hideProgressBar={true}
   closeOnClick
   rtl={false}
@@ -13,7 +13,6 @@ const ToastComponent = () => {
   pauseOnHover
   theme="light" 
   
-  className={'Toastify__toast-body'}
   />;
 };
 

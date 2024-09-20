@@ -528,10 +528,11 @@ class AddInventory extends Component {
 
     if (!formIsValid) {
       console.log(this.state.errors);
-      this.setState({
-        showError: true,
-        errorMessage: "Please fill all required fields.",
-      });
+      showErrorToast("Please fill all required fields.")
+    //   this.setState({
+    //     showError: true,
+    //     errorMessage: "Please fill all required fields.",
+    //   });
     }
 
     return formIsValid;
@@ -762,6 +763,8 @@ class AddInventory extends Component {
   };
   handleCloseModal() {
     document.getElementById("exampleModal").classList.remove("show", "d-block");
+    document.getElementById("exampleModal").style.display = 'none';
+
     document
       .querySelectorAll(".modal-backdrop")
       .forEach((el) => el.classList.remove("modal-backdrop"));
@@ -818,8 +821,6 @@ class AddInventory extends Component {
 
   onEditCart = (e, type) => {
     let value = e.target.value;
-
-    console.log(value);
 
     this.setState((prevState) => ({
       editData: {
@@ -897,7 +898,7 @@ class AddInventory extends Component {
       cartData.length > 0 &&
       cartData.find((data, index) => {
         console.log(data?.id, idCart.id);
-        if (idCart?.id === data?.id) {
+        if (idCart?.itemcode === data?.itemcode) {
           const shoulAdd = window.confirm(
             `Item has already been added to the cart at position ${
               index + 1
@@ -1388,7 +1389,7 @@ class AddInventory extends Component {
                                   ></input>
                                 </td>
                                 <td
-                                  onClick={() => this.addToCart(i)}
+                                  onClick={() => this.addToCart(i,item)}
                                   className="cursor-pointer"
                                 >
                                   <i class="bi bi-hand-index"></i>
@@ -1567,7 +1568,7 @@ class AddInventory extends Component {
                 </div>
               )}
             </div>
-            {showError && showErrorToast(errorMessage)}
+            {/* {showError && showErrorToast(errorMessage)} */}
             <div
               className={`modal fade show`}
               id="exampleModal"
