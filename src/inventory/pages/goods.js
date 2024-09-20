@@ -5,7 +5,6 @@ import Apiservice from "../constants/apiservice";
 import { queryParamsGenerate } from "../utils";
 import printer from "../assets/icons/print-solid.svg";
 import moment from "moment";
-import Toast from "../components/toast";
 
 export default class Goods extends Component {
   constructor(props) {
@@ -17,14 +16,13 @@ export default class Goods extends Component {
       goodsData: [],
       slicedData: [],
       orderBy: "asc",
-
       filter: {
         docStatus: "0",
         movCode: "GRN",
       },
       propDocdata: {
-        docNo:'',
-        docStatus:''
+        docNo: '',
+        docStatus: ''
       },
       pagination: {
         limit: 10,
@@ -40,15 +38,11 @@ export default class Goods extends Component {
 
   componentDidMount() {
     this.setState({ showSpinner: true });
-    const query = queryParamsGenerate(this.state.filter);
-    console.log(query);
-    console.log(this.toastRef,'tio')
-
     this.getNoteTable();
   }
 
   componentDidUpdate = async (prevProps, prevState) => {
-    const { pagination, filter, goodsData } = this.state;
+    const { pagination, goodsData, filter } = this.state;
 
     if (
       prevState.pagination.limit !== pagination.limit ||
@@ -57,116 +51,69 @@ export default class Goods extends Component {
       prevState.pagination.name !== pagination.name
     ) {
       if (pagination.name) {
-        console.log("Searching with pagination.name");
-
         const data = await this.handleSearch(pagination.name);
+        this.updatePagination({ total: data.length });
         this.pageLimit(data);
-
-        this.updatePagination({
-          total: data.length,
-        });
       } else {
-        console.log("No search term, using goodsData");
-
-        this.updatePagination({
-          total: goodsData.length,
-        });
-
+        this.updatePagination({ total: goodsData.length });
         this.pageLimit(goodsData);
       }
     }
 
     if (prevState.activeFilter !== this.state.activeFilter) {
-
-        if (this.state.activeFilter!=='all'){
-
-        this.setState(
-          (prevState) => ({
-            goodsData: [],
-            slicedData: [],
-            pagination: {
-              ...prevState.pagination,
-              page: 1
-            },
-            filter: {
-              ...prevState.filter,
-            }
-          }),
-          this.getNoteTable 
-        );
+      if (this.state.activeFilter !== 'all') {
+        this.setState({
+          goodsData: [],
+          slicedData: [],
+          pagination: { ...pagination, page: 1 },
+        }, this.getNoteTable);
       }
     }
-
   };
 
   updatePagination = (newPagination) => {
-    this.setState((prevState) => ({
-      pagination: {
-        ...prevState.pagination,
-        ...newPagination,
-      },
+    this.setState(prevState => ({
+      pagination: { ...prevState.pagination, ...newPagination }
     }));
   };
 
-  
   handleSearch = (value) => {
     let debounceTimer;
     this.setState({ showSpinner: true });
 
     return new Promise((resolve, reject) => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
+      if (debounceTimer) clearTimeout(debounceTimer);
 
       debounceTimer = setTimeout(() => {
         try {
-          console.log(value, "value");
-
-          const filteredItems = this?.state?.goodsData?.filter((items) => {
-            return (
-              items?.docNo?.toLowerCase().includes(value.toLowerCase()) ||
-              moment(items?.docDate)?.format("DD/MM/YYYY").includes(value) ||
-              items?.docRef1?.toLowerCase().includes(value.toLowerCase()) ||
-              items?.supplyNo
-                ?.toString()
-                .toLowerCase()
-                .includes(value.toLowerCase()) ||
-              items?.docAmt
-                ?.toString()
-                ?.toLowerCase()
-                ?.includes(value.toLowerCase())
-            );
-          });
-          let pagina = {
-            total: filteredItems.length,
-          };
-          this.updatePagination(pagina);
-
-          console.log(filteredItems, "filteredItems");
-
+          const filteredItems = this.state.goodsData.filter(item => 
+            item.docNo.toLowerCase().includes(value.toLowerCase()) ||
+            moment(item.docDate).format("DD/MM/YYYY").includes(value) ||
+            item.docRef1?.toLowerCase().includes(value.toLowerCase()) ||
+            item.supplyNo?.toString().toLowerCase().includes(value.toLowerCase()) ||
+            item.docAmt?.toString().toLowerCase().includes(value.toLowerCase())
+          );
+          this.updatePagination({ total: filteredItems.length });
           resolve(filteredItems);
         } catch (error) {
           reject(error);
         }
-      }, 500); 
+      }, 500);
     });
   };
 
-
   setSlicedData = (data) => {
-    this.setState({
-      slicedData: data,
-    });
+    this.setState({ slicedData: data });
   };
 
   printNote = (item) => {
     window.print(item);
   };
+
   pageLimit = (filtered) => {
-    const { pagination, goodsData } = this.state;
-    let startIndex = (pagination.page - 1) * pagination.limit;
-    let endIndex = startIndex + pagination.limit;
-    const sliced = filtered?.slice(startIndex, endIndex);
+    const { pagination } = this.state;
+    const startIndex = (pagination.page - 1) * pagination.limit;
+    const sliced = filtered.slice(startIndex, startIndex + pagination.limit);
     this.setSlicedData(sliced);
     this.setState({ showSpinner: false });
   };
@@ -174,204 +121,86 @@ export default class Goods extends Component {
   getNoteTable = () => {
     Apiservice()
       .getAPI(`StkMovdocHdrs${queryParamsGenerate(this.state.filter)}`)
-      .then((res) => {
+      .then(res => {
         this.setState({
           goodsData: res,
-          pagination: {
-            ...this.state.pagination,
-            total: res.length,
-          },
+          pagination: { ...this.state.pagination, total: res.length },
           showSpinner: false,
         });
-
         this.pageLimit(res);
       })
-      .catch((err) => {});
+      .catch(err => console.error(err));
   };
 
-  handleFilter = (status, index) => {
-    console.log(status,'passitem')
+  handleFilter = (status) => {
     const value = status === "Open" ? 0 : status === "Posted" ? 7 : null;
 
-    this.setState((prevState) => ({
+    this.setState(prevState => ({
       activeFilter: status,
-      propDocdata: {
-        docNo:null,
-        docStatus:null
-        
-      },
-      pagination: {
-        ...prevState.pagination,
-        name: "",
-        page: 1,
-      },
+      propDocdata: { docNo: null, docStatus: null },
+      pagination: { ...prevState.pagination, name: "", page: 1 },
       showSpinner: true,
-      filter: {
-        ...prevState.filter,
-        docStatus: value,
-      },
+      filter: { ...prevState.filter, docStatus: value },
     }));
   };
 
-  handleDetails=(item,i)=>{
-
-    this.setState((prevState) => ({
-        activeFilter: 'New',
-        propDocdata: {
-          docNo:item?.docNo??null,
-          docStatus:item?.docStatus?? null
-        },
-      }));
-
-
-  }
+  handleDetails = (item) => {
+    this.setState({
+      activeFilter: 'New',
+      propDocdata: {
+        docNo: item?.docNo ?? null,
+        docStatus: item?.docStatus ?? null,
+      },
+    });
+  };
 
   routeto = (message) => {
     this.setState({
       activeFilter: "Open",
-      filter: {
-        ...this.state.filter,
-        docStatus: 0,
-        propDocdata: {
-            docNo:null,
-            docStatus: null
-          },
-      },
+      filter: { ...this.state.filter, docStatus: 0 },
+      propDocdata: { docNo: null, docStatus: null },
     });
-    if (message)this.showToastMessage(message)
+    if (message) this.showToastMessage(message);
   };
 
-//   showToastMessage = (message) => {
-
-//     console.log(message,'mes')
-//     this.setState({
-//         showSuccessToast: true,
-//         message: message,
-//       });
-//       setTimeout(() => {
-//         this.setState({ showSuccessToast: false });
-//       }, 2000);
-
-
-//     };
-
-
-  handleSort = (sortkey, order) => {
-    console.log(sortkey);
-    console.log(this.state.orderBy, "order");
-    let { slicedData, headerDetails, orderBy } = this.state;
+  handleSort = (sortKey) => {
+    const { slicedData, orderBy } = this.state;
+    const sortedData = [...slicedData].sort((a, b) =>
+      orderBy === "asc"
+        ? a[sortKey] > b[sortKey] ? 1 : -1
+        : a[sortKey] < b[sortKey] ? 1 : -1
+    );
     this.setState({
-      orderBy: this.state.orderBy == "asc" ? "desc" : "asc",
-    });
-    if (orderBy === "asc") {
-      slicedData.sort((a, b) =>
-        a[sortkey] > b[sortkey] ? 1 : b[sortkey] > a[sortkey] ? -1 : 0
-      );
-    } else {
-      slicedData.sort((a, b) =>
-        a[sortkey] < b[sortkey] ? 1 : b[sortkey] < a[sortkey] ? -1 : 0
-      );
-    }
-    this.setState({
-      slicedData,
+      slicedData: sortedData,
+      orderBy: orderBy === "asc" ? "desc" : "asc",
     });
   };
 
   dateConvert = (value) => {
     const date = new Date(value);
-
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear(); 
-
-    return `${day}/${month}/${year}`; 
+    return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
   };
 
   render() {
-    const {
-      activeFilter,
-      showSpinner,
-      goodsData,
-      pagination,
-      changePage,
-      slicedData,
-      orderBy,
-      showSuccessToast,
-      message
-    } = this.state;
+    const { activeFilter, showSpinner, goodsData, pagination, slicedData, orderBy } = this.state;
     const filters = ["Open", "Posted", "All", "New"];
     const headerDetails = [
-      {
-        label: "Doc Number",
-        sortKey: "Doc Number",
-        enabled: true,
-        // orderBy: "asc",
-        id: "itemCode",
-        singleClickFunc: () => this.handleSort("docNo"),
-        divClass: "d-flex justify-content-between",
-      },
-      {
-        label: "Invoice Date",
-        sortKey: "Invoice Date",
-        enabled: false,
-        id: "itemCode",
-        singleClickFunc: () => this.handleSort("itemCode"),
-        divClass: "d-flex justify-content-between",
-      },
-      {
-        label: "Ref Num",
-        sortKey: "Ref Num",
-        enabled: false,
-        id: "itemCode",
-        singleClickFunc: () => this.handleSort("itemCode"),
-        divClass: "d-flex justify-content-between",
-      },
-      {
-        label: "Supplier",
-        sortKey: "Supplier",
-        enabled: false,
-        id: "itemCode",
-        singleClickFunc: () => this.handleSort("itemCode"),
-        divClass: "d-flex justify-content-between",
-      },
-      {
-        label: "Total Amount",
-        sortKey: "Total Amount",
-        enabled: false,
-        id: "itemCode",
-        singleClickFunc: () => this.handleSort("itemCode"),
-        divClass: "d-flex justify-content-between",
-      },
-      {
-        label: "Status",
-        sortKey: "Status",
-        id: "itemCode",
-        singleClickFunc: () => this.handleSort("itemCode"),
-        divClass: "d-flex justify-content-between",
-      },
-      {
-        label: "Print",
-        // sortKey: "Print",
-        id: "itemCode",
-        singleClickFunc: () => this.handleSort("itemCode"),
-        divClass: "d-flex justify-content-between",
-      },
+      { label: "Doc Number", sortKey: "docNo", singleClickFunc: () => this.handleSort("docNo") },
+      { label: "Invoice Date", sortKey: "docDate", singleClickFunc: () => this.handleSort("docDate") },
+      { label: "Ref Num", sortKey: "docRef1", singleClickFunc: () => this.handleSort("docRef1") },
+      { label: "Supplier", sortKey: "supplyNo", singleClickFunc: () => this.handleSort("supplyNo") },
+      { label: "Total Amount", sortKey: "docAmt", singleClickFunc: () => this.handleSort("docAmt") },
+      { label: "Status", sortKey: "docStatus", singleClickFunc: () => this.handleSort("docStatus") },
+      { label: "Print", sortKey: "print", singleClickFunc: () => this.printNote },
     ];
 
     return (
       <div className="notes-wrapper">
         <div className="notes-container">
           <div className="title">Goods Receive Note List</div>
-
           <div className="notes-filter">
             {filters.map((item, i) => (
-              <div
-                key={i}
-                onClick={() => this.handleFilter(item)}
-                className={`btn-filter ${
-                  activeFilter === item ? "active" : ""
-                }`}
-              >
+              <div key={i} onClick={() => this.handleFilter(item)} className={`btn-filter ${activeFilter === item ? "active" : ""}`}>
                 {item}
               </div>
             ))}
@@ -379,22 +208,16 @@ export default class Goods extends Component {
         </div>
 
         {activeFilter === "New" ? (
-          <AddInventory
-            routeto={this.routeto}
-            docData={this.state.propDocdata?.docNo ?this.state.propDocdata: null}
-          />
+          <AddInventory routeto={this.routeto} docData={this.state.propDocdata?.docNo ? this.state.propDocdata : null} />
         ) : (
-            <div
-          >
-            <Table 
-            
+          <div>
+            <Table
               headerDetails={headerDetails}
               pagination={pagination}
               updatePagination={this.updatePagination}
               tableData={goodsData}
               orderBy={orderBy}
             >
-
               {showSpinner ? (
                 <tr>
                   <td colSpan={7}>
@@ -405,61 +228,39 @@ export default class Goods extends Component {
                     </div>
                   </td>
                 </tr>
-              ) : slicedData?.length > 0 ? (
-                slicedData.map((item, i) => {
-                  return (
-                    <tr>
-                      <td
-                        onClick={() => this.handleDetails(item, i)}
-                        className="cursor-pointer"
-                      >
-                        {item.docNo}
-                      </td>
-                      <td>{this.dateConvert(item.docDate)}</td>
-                      <td>{item.docRef1 ? item.docRef1 : "-"}</td>
-                      <td>{item.supplyNo}</td>
-                      <td>{item.docAmt}</td>
-                      <td>{item.docStatus}</td>
-                      <td>
-                        <img
-                          onClick={() => this.printNote(item)}
-                          className="icon-print"
-                          src={printer}
-                        ></img>
-                      </td>
-                    </tr>
-                  );
-                })
+              ) : slicedData.length > 0 ? (
+                slicedData.map((item, i) => (
+                  <tr key={i}>
+                    <td onClick={() => this.handleDetails(item)} className="cursor-pointer">{item.docNo}</td>
+                    <td>{this.dateConvert(item.docDate)}</td>
+                    <td>{item.docRef1 || "-"}</td>
+                    <td>{item.supplyNo}</td>
+                    <td>{item.docAmt}</td>
+                    <td>{item.docStatus}</td>
+                    <td>
+                      <img onClick={() => this.printNote(item)} className="icon-print" src={printer} alt="Print" />
+                    </td>
+                  </tr>
+                ))
               ) : (
                 <tr className="no-data-row">
-                  <td className="no-data-cell" colSpan={7}>
-                    No Data
-                  </td>
+                  <td className="no-data-cell" colSpan={7}>No Data</td>
                 </tr>
               )}
             </Table>
           </div>
-
         )}
-                          {showSuccessToast && (
-  <div
-    className="toast show align-items-center text-bg-success border-0"
-    role="alert"
-    aria-live="assertive"
-    aria-atomic="true"
-  >
-    <div className="d-flex">
-      <div className="toast-body">{message}</div>
-      <button
-        type="button"
-        className="btn-close btn-close-white me-2 m-auto"
-        aria-label="Close"
-        onClick={() => this.setState({ showSuccessToast: false })}
-      ></button>
-    </div>
-  </div>
-)}
 
+        {this.state.showSuccessToast && (
+          <div className="toast show align-items-center text-bg-success border-0" role="alert">
+            <div className="d-flex">
+              <div className="toast-body">
+                {this.state.message}
+              </div>
+              <button type="button" className="btn-close btn-close-white me-2 m-auto" aria-label="Close"></button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

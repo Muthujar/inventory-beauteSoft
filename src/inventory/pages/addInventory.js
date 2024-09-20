@@ -887,9 +887,7 @@ class AddInventory extends Component {
     console.log(cartData, "cartdata");
   };
 
-  showToastMessage = (message) => {
-    this.toastRef?.current?.setToastMessage(message); 
-  };
+
 
   render() {
     console.log(this.props);
@@ -1612,10 +1610,6 @@ class AddInventory extends Component {
             </div>
           </div>
         </div>
-
-        <Toast ref={this.toastRef} />
-
-
         <div className="onSave-div">
           <div
             onClick={(e) => {

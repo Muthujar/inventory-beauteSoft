@@ -23,21 +23,6 @@ export default class Table extends Component {
     }
   }
 
-  //   componentDidMount() {
-  //   }
-
-  //   componentDidUpdate(){
-
-  //   }
-
-  // pageLimit = () => {
-  //     const {pagination,tableData,setFilteredData}=this.state
-  //     let startIndex=(pagination.page-1)*pagination.limit
-  //     let endIndex=startIndex+pagination.limit
-  //     const filtered=tableData?.slice(startIndex,endIndex)
-  //     setFilteredData(filtered)
-  //   }
-
   render() {
     let {
       headerDetails,
@@ -53,8 +38,7 @@ export default class Table extends Component {
       updateSearch,
       t,
     } = this.props;
-    // let { sortKey: currentSortKey, orderBy = "" } =
-    //   this.state.currentSortKeyDetails || {};
+
     return (
       <div>
         <div className="ipad-main-table table-container">
@@ -85,12 +69,8 @@ export default class Table extends Component {
                         divClass = "",
                         sortKey = "",
                         enabled,
-                        width = "",
                         singleClickFunc,
                         dblclickFunc,
-                        checkboxChange,
-                        selectAll,
-                        selectAllCheck,
                         currentSortKey,
                       },
                       index
@@ -107,37 +87,19 @@ export default class Table extends Component {
                           }}
                         >
                           <div
-                            className={`text-start w-75 ${
+                            className={`text-start w-100 d-flex align-items-center justify-content-between ${
                               sortKey && "cursor-pointer"
                             } ${divClass}`}
                             onClick={singleClickFunc}
                             onDoubleClick={dblclickFunc}
                           >
                             {label}
-                            {/* {selectAll ? (
-                            <NormalCheckbox
-                              name="selectAllCheck"
-                              onChange={checkboxChange}
-                              checked={selectAllCheck}
-                              type="checkbox"
-                              className={`cursor-pointer d-flex m-1`}
-                              icon={false}
-                            />
-                          ) : null} */}
-                            {/* {element && element()} */}
                             {sortKey ? (
                               <div
                                 className={`d-flex table-filter ml-2 mb-1 ${
                                   currentSortKey === sortKey && "active-filter"
                                 }`}
                               >
-                                {/* <span
-                                className={`icon-sort-up fs-14 ${
-                                  currentSortKey === sortKey &&
-                                  orderBy === "asc" &&
-                                  "active"
-                                }`}
-                              ><i className="bi-sort-up"></i></span> */}
                                 {orderBy === "asc" && enabled? (
                                   <i className="bi-sort-up fs-5"></i>
                                 ) : (
@@ -149,14 +111,6 @@ export default class Table extends Component {
                                   ""
                                 )}
                                 {!enabled &&<img src={sort} className="w-18px"></img>}
-
-                                {/* <span
-                                className={`icon-sort-down fs-14 ${
-                                  currentSortKey === sortKey &&
-                                  orderBy === "desc" &&
-                                  "active"
-                                }`}
-                              ><i className="bi-sort-down"></i></span> */}
                               </div>
                             ) : null}
                           </div>
