@@ -375,6 +375,70 @@ class AddInventory extends Component {
     }
   }
 
+  async postStockDetails() {
+    const { cartData } = this.state;
+    console.log(cartData, "data for editing");
+
+    this.setState({ showSpinner: true });
+
+    try {
+      for (let item of cartData) {
+        let res;
+
+        if (item.docId) {
+          res = await Apiservice().patchAPI(
+            `StkMovdocDtls/${item.docId}`,
+            item
+          );
+          console.log(res, `Updated item with docId: ${item.docId}`);
+        } else {
+          res = await Apiservice().postAPI("StkMovdocDtls", item);
+          console.log(res, "Created new item");
+        }
+      }
+
+      this.setState({ showSpinner: false });
+    } catch (err) {
+      console.error("Error during edit or create:", err);
+      this.setState({ showSpinner: false });
+    }
+  }
+
+  async postStockHdr(data, type) {
+    const { stockHdrsDetails, cartData } = this.state;
+    // let data = [...cartData];
+    console.log(data, "data stock h det post");
+    if (type === "create") {
+      try {
+        const res = await Apiservice().postAPI("StkMovdocHdrs", data);
+        console.log(res, "post");
+
+        this.setState({
+          showSpinner: false,
+        });
+
+        this.addNewControlNumber();
+        // this.pageLimit();
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      try {
+        let docNo = data.docNo;
+        const res = await Apiservice().postAPI(
+          `StkMovdocHdrs/update?[where][docNo]=${docNo}`,
+          data
+        );
+
+        this.setState({
+          showSpinner: false,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+
   pageLimit = (filtered) => {
     const { supplyPagination, stockList, stockHdrsDetails } = this.state;
     // console.log(stockList, "su");
@@ -538,69 +602,7 @@ class AddInventory extends Component {
     return formIsValid;
   };
 
-  async postStockDetails() {
-    const { cartData } = this.state;
-    console.log(cartData, "data for editing");
 
-    this.setState({ showSpinner: true });
-
-    try {
-      for (let item of cartData) {
-        let res;
-
-        if (item.docId) {
-          res = await Apiservice().patchAPI(
-            `StkMovdocDtls/${item.docId}`,
-            item
-          );
-          console.log(res, `Updated item with docId: ${item.docId}`);
-        } else {
-          res = await Apiservice().postAPI("StkMovdocDtls", item);
-          console.log(res, "Created new item");
-        }
-      }
-
-      this.setState({ showSpinner: false });
-    } catch (err) {
-      console.error("Error during edit or create:", err);
-      this.setState({ showSpinner: false });
-    }
-  }
-
-  async postStockHdr(data, type) {
-    const { stockHdrsDetails, cartData } = this.state;
-    // let data = [...cartData];
-    console.log(data, "data stock h det post");
-    if (type === "create") {
-      try {
-        const res = await Apiservice().postAPI("StkMovdocHdrs", data);
-        console.log(res, "post");
-
-        this.setState({
-          showSpinner: false,
-        });
-
-        this.addNewControlNumber();
-        // this.pageLimit();
-      } catch (err) {
-        console.error(err);
-      }
-    } else {
-      try {
-        let docNo = data.docNo;
-        const res = await Apiservice().postAPI(
-          `StkMovdocHdrs/update?[where][docNo]=${docNo}`,
-          data
-        );
-
-        this.setState({
-          showSpinner: false,
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    }
-  }
 
   print() {
     console.log(this.state.stockList, "stlis");
