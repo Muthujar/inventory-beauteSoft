@@ -213,6 +213,7 @@ export default class Goods extends Component {
       {
         label: "Doc Number",
         sortKey: "docNo",
+        enabled:true,
         singleClickFunc: () => this.handleSort("docNo"),
       },
       {

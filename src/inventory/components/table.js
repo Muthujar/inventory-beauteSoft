@@ -100,6 +100,13 @@ export default class Table extends Component {
                                   currentSortKey === sortKey && "active-filter"
                                 }`}
                               >
+                                {/* <span
+                                className={`icon-sort-up fs-14 ${
+                                  currentSortKey === sortKey &&
+                                  orderBy === "asc" &&
+                                  "active"
+                                }`}
+                              ><i className="bi-sort-up"></i></span> */}
                                 {orderBy === "asc" && enabled? (
                                   <i className="bi-sort-up fs-5"></i>
                                 ) : (

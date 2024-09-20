@@ -44,6 +44,8 @@ class AddInventory extends Component {
         total: null,
         name: "",
         hideLimit: true,
+        range:'',
+        brand:''
       },
 
       cartData: [],
@@ -87,6 +89,7 @@ class AddInventory extends Component {
   async componentDidMount() {
     console.log(this.props);
     const { docData } = this.props;
+    // this.setState({ showSpinner: true });
 
     if (docData) {
       const filter = {
@@ -109,6 +112,8 @@ class AddInventory extends Component {
 
       await this.getDocNo();
       await this.getSupplyList();
+      this.setState({ showSpinner: true });
+
       await this.getStockDetails();
     }
 
@@ -122,19 +127,45 @@ class AddInventory extends Component {
       prevState.supplyPagination.limit !== supplyPagination.limit ||
       prevState.supplyPagination.page !== supplyPagination.page ||
       prevState.supplyPagination.total !== supplyPagination.total ||
-      prevState.supplyPagination.name !== supplyPagination.name
+      prevState.supplyPagination.name !== supplyPagination.name||
+      prevState.supplyPagination.brand !== supplyPagination.brand||
+      prevState.supplyPagination.range !== supplyPagination.range
+
     ) {
       if (supplyPagination.name) {
         console.log("Searching with pagination.name");
 
-        const data = await this.handleSearch(supplyPagination.name);
+        const data = await this.handleSearch(supplyPagination.name,'name');
         console.log(data, "datasearch");
         this.pageLimit(data);
 
         this.updatePagination({
           total: data.length,
         });
-      } else {
+      }
+      else if(supplyPagination.brand){
+
+        const data = await this.handleSearch(supplyPagination.brand,'brand');
+        console.log(data, "brand");
+        this.pageLimit(data);
+
+        this.updatePagination({
+          total: data.length,
+        });
+
+      }
+      else if(supplyPagination.range){
+
+        const data = await this.handleSearch(supplyPagination.range,'range');
+        console.log(data, "range");
+        this.pageLimit(data);
+
+        this.updatePagination({
+          total: data.length,
+        });
+
+      }
+      else {
         console.log("No search term, using goodsData");
 
         this.updatePagination({
@@ -340,7 +371,7 @@ class AddInventory extends Component {
         showSpinner: false,
       }));
       console.log(updatedRes, "stoclupd");
-      //   this.pageLimit(updatedRes);
+        // this.pageLimit(updatedRes);
     } catch (err) {
       // Handle the error
       console.error("Error fetching supply details:", err);
@@ -365,7 +396,7 @@ class AddInventory extends Component {
   };
 
 
-  handleSearch = (value) => {
+  handleSearch = (value,type) => {
     let debounceTimer;
     this.setState({ showSpinner: true });
 
@@ -377,39 +408,26 @@ class AddInventory extends Component {
       debounceTimer = setTimeout(() => {
         try {
           const filteredItems = this?.state?.stockList?.filter((items) => {
-            return (
-              items?.stockCode
-                ?.toString()
-                ?.toLowerCase()
-                .includes(value.toLowerCase()) ||
-              items?.stockName
-                ?.toString()
-                ?.toLowerCase()
-                .includes(value.toLowerCase()) ||
-              items?.itemUom
-                ?.toString()
-                ?.toLowerCase()
-                .includes(value.toLowerCase()) ||
-              items?.linkCode
-                ?.toString()
-                ?.toLowerCase()
-                .includes(value.toLowerCase()) ||
-              items?.brandCode
-                ?.toString()
-                ?.toLowerCase()
-                .includes(value.toLowerCase()) ||
-              items?.range
-                ?.toString()
-                ?.toLowerCase()
-                .includes(value.toLowerCase()) ||
-              items?.quantity
-                ?.toString()
-                ?.toLowerCase()
-                .includes(value.toLowerCase())
-            );
+                const searchValue = value.toLowerCase();
+                console.log(type)
+                if (type === 'name') {
+                  return (
+                    items?.stockCode?.toString()?.toLowerCase().includes(searchValue) ||
+                    items?.stockName?.toString()?.toLowerCase().includes(searchValue) ||
+                    items?.itemUom?.toString()?.toLowerCase().includes(searchValue) ||
+                    items?.linkCode?.toString()?.toLowerCase().includes(searchValue) ||
+                    items?.brandCode?.toString()?.toLowerCase().includes(searchValue) ||
+                    items?.range?.toString()?.toLowerCase().includes(searchValue) ||
+                    items?.quantity?.toString()?.toLowerCase().includes(searchValue)
+                  );
+                } else if (type === 'brand') {
+                  return items?.brand?.toString()?.toLowerCase().includes(searchValue);
+                } else if (type === 'range') {
+                  return items?.range?.toString()?.toLowerCase().includes(searchValue);
+                }
+                return false; 
           });
 
-          console.log(filteredItems, "filteredItems");
 
           let pagina = {
             total: filteredItems.length,
@@ -430,12 +448,13 @@ class AddInventory extends Component {
     });
   };
 
-  updateSearch = (value ) => {
-    console.log(value, "sear");
+  updateSearch = (value,type ) => {
+
+    console.log(value,type, "sear");
     this.setState((prevState) => ({
       supplyPagination: {
         ...prevState.supplyPagination,
-        name: value,
+        [type]: value,
       },
     }));
   };
@@ -1266,6 +1285,8 @@ class AddInventory extends Component {
                       placeholder="Enter Brand"
                       className="input-field ml-8"
                       type="string"
+                      value={supplyPagination.brand}
+
                       onChange={(e) => this.updateSearch(e?.target.value,"brand")}
                     ></input>
                   </div>
@@ -1274,6 +1295,8 @@ class AddInventory extends Component {
                       placeholder="Enter Range"
                       className="input-field"
                       type="string"
+                      value={supplyPagination.range}
+
                       onChange={(e) => this.updateSearch(e?.target.value,"range")}
                     ></input>
                   </div>
@@ -1283,7 +1306,7 @@ class AddInventory extends Component {
                       className="input-field a"
                       type="string"
                       value={supplyPagination.name}
-                      onChange={(e) => this.updateSearch(e?.target.value,"all")}
+                      onChange={(e) => this.updateSearch(e?.target.value,"name")}
                     ></input>
                   </div>
                 </div>
@@ -1518,28 +1541,7 @@ class AddInventory extends Component {
         </div>
         {showError && 
         showErrorToast(errorMessage)
-        
-        // (
-        //   <div
-        //     className="toast show align-items-center text-bg-danger border-0"
-        //     role="alert"
-        //     aria-live="assertive"
-        //     aria-atomic="true"
-        //   >
-        //     <div className="d-flex">
-        //       <div className="toast-body">{errorMessage}</div>
-        //       <button
-        //         type="button"
-        //         className="btn-close btn-close-white me-2 m-auto"
-        //         aria-label="Close"
-        //         onClick={() => this.setState({ showErrorToast: false })}
-        //       ></button>
-        //     </div>
-        //   </div>
-        // )
-        
         }
-
         <div
           className={`modal fade show`} 
           id="exampleModal"
