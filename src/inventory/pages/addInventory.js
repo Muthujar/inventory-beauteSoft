@@ -764,7 +764,6 @@ class AddInventory extends Component {
   handleCloseModal() {
     document.getElementById("exampleModal").classList.remove("show", "d-block");
     document.getElementById("exampleModal").style.display = 'none';
-
     document
       .querySelectorAll(".modal-backdrop")
       .forEach((el) => el.classList.remove("modal-backdrop"));
